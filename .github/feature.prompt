@@ -1,0 +1,221 @@
+# Tab Search Chrome Extension - Feature Development Prompt
+
+## Project Context
+You are working on "Tab Search", a Chrome Extension that helps users search and manage their browser tabs efficiently. The extension uses Manifest V3 and provides a modern, intuitive popup interface.
+
+## Current Architecture
+- **Class-based JavaScript**: Main functionality in `TabSearcher` class
+- **Modern UI**: Clean design with gradients and smooth animations  
+- **Real-time Search**: Filter tabs by title and URL as user types
+- **Tab Management**: Switch to tabs, close individual tabs, close others
+- **Keyboard Navigation**: Arrow keys, Enter, Escape support
+
+## Key Design Principles
+
+### 1. User Experience First
+- **Instant Response**: Search results update as user types
+- **Clear Visual Feedback**: Loading states, hover effects, active states
+- **Keyboard Accessibility**: Full keyboard navigation support
+- **Error Handling**: Graceful degradation with helpful error messages
+
+### 2. Performance Focused
+- **Efficient Filtering**: Debounced search for large tab sets
+- **Minimal DOM Updates**: Only re-render when necessary
+- **Memory Conscious**: Clean up event listeners and references
+- **Fast Startup**: Quick popup load time
+
+### 3. Modern Web Standards
+- **ES6+ JavaScript**: async/await, arrow functions, destructuring
+- **Semantic HTML**: Proper accessibility attributes
+- **CSS Grid/Flexbox**: Modern layout techniques
+- **Progressive Enhancement**: Works without JavaScript for basic functionality
+
+## Feature Development Guidelines
+
+### Adding New Features
+When implementing new features, follow this pattern:
+
+```javascript
+// 1. Add to class constructor or init method
+this.newFeatureElement = document.getElementById('newFeature');
+
+// 2. Set up event listeners in setupEventListeners()
+this.newFeatureElement.addEventListener('click', () => {
+  this.handleNewFeature();
+});
+
+// 3. Implement feature method with error handling
+async handleNewFeature() {
+  try {
+    // Feature implementation
+    await this.performAction();
+    this.updateUI();
+  } catch (error) {
+    console.error('Error in new feature:', error);
+    this.showError('Feature failed');
+  }
+}
+```
+
+### UI Component Pattern
+```javascript
+// Create reusable UI components
+createComponentHTML(data) {
+  const escaped = this.escapeHtml(data.text);
+  return `
+    <div class="component-item" data-id="${data.id}">
+      <div class="component-content">${escaped}</div>
+      <div class="component-actions">
+        <button class="action-btn">Action</button>
+      </div>
+    </div>
+  `;
+}
+```
+
+### Chrome API Integration
+```javascript
+// Always wrap Chrome API calls in try/catch
+async chromeApiMethod() {
+  try {
+    const result = await chrome.tabs.query({});
+    return result;
+  } catch (error) {
+    console.error('Chrome API error:', error);
+    throw new Error('Failed to access browser tabs');
+  }
+}
+```
+
+## Common Feature Requests & Implementation Approach
+
+### 1. Tab Grouping/Filtering
+- Add filter buttons for different tab categories
+- Implement in `filterTabs()` method
+- Update UI to show active filters
+
+### 2. Tab History/Recently Closed
+- Use `chrome.sessions` API
+- Add new section in popup
+- Implement restore functionality
+
+### 3. Bookmarking Integration
+- Use `chrome.bookmarks` API
+- Add bookmark button to tab items
+- Show bookmark status visually
+
+### 4. Tab Statistics
+- Track tab usage patterns
+- Use `chrome.storage` for persistence
+- Display insights in popup
+
+### 5. Bulk Operations
+- Add selection checkboxes
+- Implement multi-select actions
+- Confirm destructive operations
+
+## Code Quality Standards
+
+### Error Handling
+```javascript
+// Always provide user-friendly error messages
+catch (error) {
+  console.error('Technical details:', error);
+  this.showError('Something went wrong. Please try again.');
+}
+```
+
+### Accessibility
+```html
+<!-- Include proper ARIA attributes -->
+<button 
+  class="tab-item" 
+  role="button" 
+  aria-label="Switch to tab: ${tab.title}"
+  tabindex="0">
+```
+
+### Security
+```javascript
+// Always escape user content
+escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+```
+
+## Testing Checklist
+When implementing new features, verify:
+
+- [ ] Works with 1 tab, 10 tabs, 100+ tabs
+- [ ] Handles tabs with no favicon gracefully
+- [ ] Supports very long tab titles/URLs
+- [ ] Keyboard navigation still works
+- [ ] Error states display properly
+- [ ] Performance remains smooth
+- [ ] Accessibility features intact
+- [ ] Follows existing design patterns
+
+## Styling Guidelines
+
+### CSS Variables for Consistency
+```css
+:root {
+  --primary-color: #667eea;
+  --secondary-color: #764ba2;
+  --text-color: #2d3748;
+  --border-color: #e1e5e9;
+  --hover-bg: #f8f9fa;
+}
+```
+
+### Animation Standards
+```css
+/* Use consistent timing for all animations */
+.animated-element {
+  transition: all 0.2s ease;
+}
+
+/* Hover effects should be subtle */
+.interactive:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+```
+
+## Extension-Specific Considerations
+
+### Manifest Updates
+- Only add permissions when absolutely necessary
+- Document new permissions in README
+- Consider user privacy implications
+
+### Content Security Policy
+- No inline scripts or styles
+- Use nonce for dynamic content if needed
+- Sanitize all user inputs
+
+### Browser Compatibility
+- Test on Chrome stable and beta
+- Consider Chromium-based browsers
+- Handle API differences gracefully
+
+## Development Workflow
+
+1. **Plan**: Define feature requirements and user flow
+2. **Design**: Create UI mockups respecting existing design system
+3. **Implement**: Follow established patterns and conventions
+4. **Test**: Verify functionality across different scenarios
+5. **Document**: Update README and inline comments
+6. **Review**: Ensure code quality and security standards
+
+## Performance Optimization Tips
+
+- **Debounce search input**: Prevent excessive filtering
+- **Virtual scrolling**: For very large tab lists
+- **Event delegation**: Use single listener for tab list
+- **Lazy loading**: Load tab favicons on demand
+- **Memoization**: Cache expensive computations
+
+Remember: The goal is to create a fast, intuitive, and reliable tab management experience that feels native to the browser.
