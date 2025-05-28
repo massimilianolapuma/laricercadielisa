@@ -1,10 +1,30 @@
 # GitHub Copilot Instructions for Tab Search Chrome Extension
 
+## Environment Configuration
+
+### Terminal & Build Environment
+
+- **Operating System**: macOS with zsh shell
+- **Terminal Commands**:
+  - DO NOT use `timeout` command (not available in macOS by default)
+  - Use standard Unix commands or `gtimeout` if timeout functionality is needed
+  - Always wait for build and test completion - they typically take 3-10 seconds
+  - Do not interrupt or timeout test runs prematurely
+
+### Testing & Build Guidelines
+
+- **Test Execution**: Always allow tests to complete fully before proceeding
+- **Build Process**: Wait for compilation and bundling to finish completely
+- **Coverage Reports**: Allow time for coverage generation (can take several seconds)
+- **Performance**: Tests may take longer with large tab datasets or complex scenarios
+
 ## Project Overview
 
 This is a Chrome Extension called "Tab Search" (internal name: laricercadielisa) that allows users to search through all opened browser tabs quickly and efficiently. The extension provides a modern, intuitive interface for tab management with real-time search capabilities.
 
 ## Project Structure
+
+This is the project structure, updated every time new files are added.
 
 ```
 laricercadielisa/
@@ -300,6 +320,13 @@ console.log(`Filtered ${this.tabs.length} tabs to ${results.length} results`);
 ### Testing Requirements
 
 Every feature addition MUST include comprehensive testing:
+
+#### Testing Environment Guidelines
+
+- **Wait for Completion**: Always allow tests to complete fully (typically 3-10 seconds)
+- **No Timeouts**: Do not use `timeout` command on macOS - use `gtimeout` if needed
+- **Coverage Generation**: Allow extra time for coverage reports to generate
+- **Test Commands**: Use `npm test` or `npx vitest run --coverage` and wait for completion
 
 #### Manual Testing Checklist
 
