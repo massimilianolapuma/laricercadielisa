@@ -24,8 +24,16 @@ describe("TabSearcher Unit Tests", () => {
     tabSearcher.matchCountEl = { textContent: "", style: { display: "none" } };
     tabSearcher.noResultsEl = { style: { display: "none" } };
     tabSearcher.loadingEl = { style: { display: "none" } };
-    tabSearcher.refreshBtn = { addEventListener: () => {} };
-    tabSearcher.closeOthersBtn = { addEventListener: () => {} };
+    tabSearcher.refreshBtn = {
+      addEventListener: () => {
+        /* mock - intentionally empty */
+      },
+    };
+    tabSearcher.closeOthersBtn = {
+      addEventListener: () => {
+        /* mock - intentionally empty */
+      },
+    };
   });
 
   describe("Core Functionality", () => {
