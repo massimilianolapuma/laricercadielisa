@@ -2,18 +2,18 @@
  * Test setup file - runs before all tests
  * Sets up Chrome API mocks and global test utilities
  */
-import { vi, beforeEach, afterEach } from "vitest";
+import { vi, beforeEach, afterEach } from 'vitest';
 
 // Global mock functions for creating test data
 global.createMockTab = (overrides = {}) => ({
   id: 1,
-  title: "Mock Tab",
-  url: "https://example.com",
-  favIconUrl: "https://example.com/favicon.ico",
+  title: 'Mock Tab',
+  url: 'https://example.com',
+  favIconUrl: 'https://example.com/favicon.ico',
   windowId: 1,
   active: false,
   pinned: false,
-  ...overrides,
+  ...overrides
 });
 
 global.createMockTabs = (count = 3) =>
@@ -23,7 +23,7 @@ global.createMockTabs = (count = 3) =>
       title: `Mock Tab ${i + 1}`,
       url: `https://example${i + 1}.com`,
       favIconUrl: `https://example${i + 1}.com/favicon.ico`,
-      active: i === 0,
+      active: i === 0
     })
   );
 
@@ -34,24 +34,24 @@ global.chrome = {
     update: vi.fn(),
     remove: vi.fn(),
     get: vi.fn(),
-    getCurrent: vi.fn(),
+    getCurrent: vi.fn()
   },
   windows: {
-    update: vi.fn(),
+    update: vi.fn()
   },
   runtime: {
     lastError: null,
     onMessage: {
       addListener: vi.fn(),
-      removeListener: vi.fn(),
-    },
-  },
+      removeListener: vi.fn()
+    }
+  }
 };
 
 // Mock DOM methods that might not be available in test environment
-Object.defineProperty(window, "close", {
+Object.defineProperty(window, 'close', {
   value: vi.fn(),
-  writable: true,
+  writable: true
 });
 
 // Mock console methods to avoid noise in tests
@@ -60,19 +60,19 @@ global.console = {
   log: vi.fn(),
   error: vi.fn(),
   warn: vi.fn(),
-  info: vi.fn(),
+  info: vi.fn()
 };
 
 // Helper function to create mock tab data
 global.createMockTab = (overrides = {}) => ({
   id: 1,
-  title: "Test Tab",
-  url: "https://example.com",
-  favIconUrl: "https://example.com/favicon.ico",
+  title: 'Test Tab',
+  url: 'https://example.com',
+  favIconUrl: 'https://example.com/favicon.ico',
   windowId: 1,
   active: false,
   pinned: false,
-  ...overrides,
+  ...overrides
 });
 
 // Helper function to create multiple mock tabs
@@ -82,20 +82,20 @@ global.createMockTabs = (count = 5) =>
       id: i + 1,
       title: `Test Tab ${i + 1}`,
       url: `https://example${i + 1}.com`,
-      active: i === 0, // First tab is active
+      active: i === 0 // First tab is active
     })
   );
 
 // Clean up after each test
 afterEach(() => {
   vi.clearAllMocks();
-  document.body.innerHTML = "";
+  document.body.innerHTML = '';
 });
 
 // Enhanced DOM setup for comprehensive testing
 beforeEach(() => {
   // Reset DOM
-  document.body.innerHTML = "";
+  document.body.innerHTML = '';
 
   // Create basic popup structure that tests expect
   const popupHTML = `
@@ -123,28 +123,28 @@ beforeEach(() => {
   const mockTabs = [
     {
       id: 1,
-      title: "Google",
-      url: "https://google.com",
-      favIconUrl: "https://google.com/favicon.ico",
+      title: 'Google',
+      url: 'https://google.com',
+      favIconUrl: 'https://google.com/favicon.ico',
       windowId: 1,
-      active: true,
+      active: true
     },
     {
       id: 2,
-      title: "GitHub",
-      url: "https://github.com",
-      favIconUrl: "https://github.com/favicon.ico",
+      title: 'GitHub',
+      url: 'https://github.com',
+      favIconUrl: 'https://github.com/favicon.ico',
       windowId: 1,
-      active: false,
+      active: false
     },
     {
       id: 3,
-      title: "Stack Overflow",
-      url: "https://stackoverflow.com",
-      favIconUrl: "https://stackoverflow.com/favicon.ico",
+      title: 'Stack Overflow',
+      url: 'https://stackoverflow.com',
+      favIconUrl: 'https://stackoverflow.com/favicon.ico',
       windowId: 1,
-      active: false,
-    },
+      active: false
+    }
   ];
 
   global.chrome.tabs.query.mockResolvedValue(mockTabs);
