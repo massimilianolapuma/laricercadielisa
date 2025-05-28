@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tab Search</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>🔍 Tab Search</h1>
+      </header>
+
+      <div class="search-section">
+        <input
+          type="text"
+          id="searchInput"
+          placeholder="Search tabs by title or URL..."
+          autocomplete="off"
+          autofocus
+        />
+        <div class="search-stats">
+          <span id="tabCount">0 tabs</span>
+          <span id="matchCount"></span>
+        </div>
+      </div>
+
+      <div class="tabs-container">
+        <div id="tabsList" class="tabs-list">
+          <!-- Tabs will be populated here -->
+        </div>
+
+        <div id="noResults" class="no-results" style="display: none">
+          <div class="no-results-icon">🔍</div>
+          <p>No tabs found matching your search</p>
+        </div>
+
+        <div id="loading" class="loading">
+          <div class="loading-spinner"></div>
+          <p>Loading tabs...</p>
+        </div>
+      </div>
+
+      <footer>
+        <div class="actions">
+          <button
+            id="closeOthersBtn"
+            class="action-btn secondary"
+            title="Close all tabs except current"
+          >
+            Close Others
+          </button>
+          <button
+            id="refreshBtn"
+            class="action-btn primary"
+            title="Refresh tab list"
+          >
+            ↻ Refresh
+          </button>
+        </div>
+      </footer>
+    </div>
+
+    <script src="popup.js"></script>
+  </body>
+</html>

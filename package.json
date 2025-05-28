@@ -1,0 +1,31 @@
+{
+    "name": "laricercadielisa",
+    "version": "1.0.0",
+    "description": "A Chrome extension for searching through all opened tabs",
+    "type": "module",
+    "scripts": {
+        "test": "vitest",
+        "test:ui": "vitest --ui",
+        "test:coverage": "vitest --coverage",
+        "test:run": "vitest run",
+        "lint": "eslint popup.js tests/",
+        "lint:fix": "eslint popup.js tests/ --fix",
+        "dev": "npm run test",
+        "build": "npm run test:run && npm run lint"
+    },
+    "devDependencies": {
+        "@vitest/ui": "^1.0.0",
+        "@vitest/coverage-v8": "^1.0.0",
+        "eslint": "^8.0.0",
+        "jsdom": "^23.0.0",
+        "vitest": "^1.0.0"
+    },
+    "keywords": [
+        "chrome-extension",
+        "tab-search",
+        "browser",
+        "productivity"
+    ],
+    "author": "",
+    "license": "MIT"
+}
