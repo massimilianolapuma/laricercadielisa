@@ -7,6 +7,7 @@
         "test": "vitest",
         "test:ui": "vitest --ui",
         "test:coverage": "vitest --coverage",
+        "test:coverage:ci": "vitest run --coverage",
         "test:run": "vitest run",
         "lint": "eslint popup.js tests/",
         "lint:fix": "eslint popup.js tests/ --fix",

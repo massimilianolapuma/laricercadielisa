@@ -4,6 +4,29 @@
  */
 import { vi, beforeEach, afterEach } from "vitest";
 
+// Global mock functions for creating test data
+global.createMockTab = (overrides = {}) => ({
+  id: 1,
+  title: "Mock Tab",
+  url: "https://example.com",
+  favIconUrl: "https://example.com/favicon.ico",
+  windowId: 1,
+  active: false,
+  pinned: false,
+  ...overrides,
+});
+
+global.createMockTabs = (count = 3) =>
+  Array.from({ length: count }, (_, i) =>
+    global.createMockTab({
+      id: i + 1,
+      title: `Mock Tab ${i + 1}`,
+      url: `https://example${i + 1}.com`,
+      favIconUrl: `https://example${i + 1}.com/favicon.ico`,
+      active: i === 0,
+    })
+  );
+
 // Mock Chrome APIs
 global.chrome = {
   tabs: {
@@ -53,8 +76,8 @@ global.createMockTab = (overrides = {}) => ({
 });
 
 // Helper function to create multiple mock tabs
-global.createMockTabs = (count = 5) => {
-  return Array.from({ length: count }, (_, i) =>
+global.createMockTabs = (count = 5) =>
+  Array.from({ length: count }, (_, i) =>
     global.createMockTab({
       id: i + 1,
       title: `Test Tab ${i + 1}`,
@@ -62,7 +85,6 @@ global.createMockTabs = (count = 5) => {
       active: i === 0, // First tab is active
     })
   );
-};
 
 // Clean up after each test
 afterEach(() => {

@@ -136,7 +136,7 @@ class TabSearcher {
 
     // Add click event listeners
     this.tabsList.querySelectorAll(".tab-item").forEach((tabEl) => {
-      const tabId = parseInt(tabEl.dataset.tabId);
+      const tabId = parseInt(tabEl.dataset.tabId, 10);
 
       tabEl.addEventListener("click", (e) => {
         if (!e.target.classList.contains("close-tab")) {
@@ -163,7 +163,7 @@ class TabSearcher {
 
     const favicon = tab.favIconUrl
       ? `<img src="${tab.favIconUrl}" class="tab-favicon" alt="favicon">`
-      : `<div class="tab-favicon default">🌐</div>`;
+      : '<div class="tab-favicon default">🌐</div>';
 
     return `
       <div class="tab-item ${isActive ? "active" : ""}" data-tab-id="${tab.id}">
@@ -180,7 +180,9 @@ class TabSearcher {
   }
 
   highlightText(text, query) {
-    if (!query) return this.escapeHtml(text);
+    if (!query) {
+      return this.escapeHtml(text);
+    }
 
     const escapedText = this.escapeHtml(text);
     const escapedQuery = this.escapeHtml(query);
@@ -233,6 +235,7 @@ class TabSearcher {
   }
 
   async closeOtherTabs() {
+    // eslint-disable-next-line no-alert
     if (!confirm("Close all other tabs? This action cannot be undone.")) {
       return;
     }
@@ -274,10 +277,10 @@ class TabSearcher {
       case "Enter":
         e.preventDefault();
         if (activeItem) {
-          const tabId = parseInt(activeItem.dataset.tabId);
+          const tabId = parseInt(activeItem.dataset.tabId, 10);
           this.switchToTab(tabId);
         } else if (tabItems.length > 0) {
-          const tabId = parseInt(tabItems[0].dataset.tabId);
+          const tabId = parseInt(tabItems[0].dataset.tabId, 10);
           this.switchToTab(tabId);
         }
         break;
@@ -321,7 +324,9 @@ class TabSearcher {
 
 // Initialize the tab searcher when the popup loads
 document.addEventListener("DOMContentLoaded", () => {
-  new TabSearcher();
+  const tabSearcher = new TabSearcher();
+  // Store reference to prevent garbage collection
+  window.tabSearcher = tabSearcher;
 });
 
 // Add CSS for keyboard navigation

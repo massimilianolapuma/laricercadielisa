@@ -184,7 +184,7 @@ describe("Accessibility Tests", () => {
       announceResults() {
         const resultCount = this.filteredTabs.length;
         const announcement =
-          resultCount === 1 ? `1 tab found` : `${resultCount} tabs found`;
+          resultCount === 1 ? "1 tab found" : `${resultCount} tabs found`;
 
         // Create temporary announcement element
         const announcer = document.createElement("div");
@@ -232,7 +232,7 @@ describe("Accessibility Tests", () => {
           .replace(/'/g, "&#039;");
       }
 
-      async switchToTab(tab) {
+      async switchToTab(_tab) {
         // Mock implementation
         return Promise.resolve();
       }

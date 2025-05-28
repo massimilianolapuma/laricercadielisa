@@ -3,7 +3,7 @@
  * Tests core functionality like filtering, escaping, and utility methods
  */
 
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 
 // Mock TabSearcher class for testing since popup.js isn't a module
 class MockTabSearcher {
@@ -36,7 +36,9 @@ class MockTabSearcher {
   }
 
   highlightText(text, query) {
-    if (!query) return this.escapeHtml(text);
+    if (!query) {
+      return this.escapeHtml(text);
+    }
 
     const escapedText = this.escapeHtml(text);
     const escapedQuery = this.escapeHtml(query);
@@ -62,23 +64,34 @@ class MockTabSearcher {
   showLoading(show) {
     const loadingEl = document.getElementById("loading");
     const tabsList = document.getElementById("tabsList");
-    if (loadingEl) loadingEl.style.display = show ? "flex" : "none";
-    if (tabsList) tabsList.style.display = show ? "none" : "block";
+    if (loadingEl) {
+      loadingEl.style.display = show ? "flex" : "none";
+    }
+    if (tabsList) {
+      tabsList.style.display = show ? "none" : "block";
+    }
   }
 
   showNoResults(show) {
     const noResultsEl = document.getElementById("noResults");
     const tabsList = document.getElementById("tabsList");
-    if (noResultsEl) noResultsEl.style.display = show ? "flex" : "none";
-    if (tabsList) tabsList.style.display = show ? "none" : "block";
+    if (noResultsEl) {
+      noResultsEl.style.display = show ? "flex" : "none";
+    }
+    if (tabsList) {
+      tabsList.style.display = show ? "none" : "block";
+    }
   }
 
   updateStats() {
     const tabCount = document.getElementById("tabCount");
     const matchCount = document.getElementById("matchCount");
-    if (tabCount) tabCount.textContent = `${this.tabs.length} tabs`;
-    if (matchCount)
+    if (tabCount) {
+      tabCount.textContent = `${this.tabs.length} tabs`;
+    }
+    if (matchCount) {
       matchCount.textContent = `${this.filteredTabs.length} matches`;
+    }
   }
 }
 
