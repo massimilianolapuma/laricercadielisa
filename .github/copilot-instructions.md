@@ -8,7 +8,7 @@
 - **Terminal Commands**:
   - DO NOT use `timeout` command (not available in macOS by default)
   - Use standard Unix commands or `gtimeout` if timeout functionality is needed
-  - Always wait for build and test completion - they typically take 3-10 seconds
+  - Before working on the background output always wait for build and test completion - they typically take 10-30 seconds
   - Do not interrupt or timeout test runs prematurely
 
 ### Testing & Build Guidelines

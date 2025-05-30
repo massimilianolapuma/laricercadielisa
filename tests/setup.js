@@ -89,11 +89,20 @@ global.createMockTabs = (count = 5) =>
 // Clean up after each test
 afterEach(() => {
   vi.clearAllMocks();
-  document.body.innerHTML = '';
+  // Safely clean up DOM if it exists
+  if (document?.body) {
+    document.body.innerHTML = '';
+  }
 });
 
 // Enhanced DOM setup for comprehensive testing
 beforeEach(() => {
+  // Ensure document.body exists in jsdom environment
+  if (!document.body) {
+    document.body = document.createElement('body');
+    document.documentElement.appendChild(document.body);
+  }
+
   // Reset DOM
   document.body.innerHTML = '';
 
@@ -151,7 +160,11 @@ beforeEach(() => {
   global.chrome.tabs.update.mockResolvedValue({});
   global.chrome.tabs.remove.mockResolvedValue({});
   global.chrome.windows.update.mockResolvedValue({});
-  global.chrome.runtime.lastError = null;
+
+  // Ensure runtime object exists before setting lastError
+  if (global.chrome.runtime) {
+    global.chrome.runtime.lastError = null;
+  }
 
   // Clear all mocks
   vi.clearAllMocks();

@@ -57,7 +57,7 @@ class TabSearcher {
         active: true,
         currentWindow: true
       });
-      this.currentTabId = activeTab?.id;
+      this.currentTabId = activeTab?.id || null;
 
       this.tabs = tabs.map(tab => ({
         id: tab.id,
@@ -86,8 +86,10 @@ class TabSearcher {
       this.filteredTabs = [...this.tabs];
     } else {
       this.filteredTabs = this.tabs.filter(tab => {
-        const titleMatch = tab.title.toLowerCase().includes(query);
-        const urlMatch = tab.url.toLowerCase().includes(query);
+        const title = tab.title || '';
+        const url = tab.url || '';
+        const titleMatch = title.toLowerCase().includes(query);
+        const urlMatch = url.toLowerCase().includes(query);
         return titleMatch || urlMatch;
       });
     }
@@ -153,8 +155,11 @@ class TabSearcher {
     const isActive = tab.id === this.currentTabId;
     const query = this.searchInput.value.toLowerCase().trim();
 
-    const highlightedTitle = this.highlightText(tab.title, query);
-    const highlightedUrl = this.highlightText(this.formatUrl(tab.url), query);
+    const title = tab.title || 'Untitled';
+    const url = tab.url || '';
+
+    const highlightedTitle = this.highlightText(title, query);
+    const highlightedUrl = this.highlightText(this.formatUrl(url), query);
 
     const favicon = tab.favIconUrl
       ? `<img src="${tab.favIconUrl}" class="tab-favicon" alt="favicon">`
@@ -175,6 +180,10 @@ class TabSearcher {
   }
 
   highlightText(text, query) {
+    if (!text) {
+      return '';
+    }
+
     if (!query) {
       return this.escapeHtml(text);
     }
@@ -187,6 +196,10 @@ class TabSearcher {
   }
 
   formatUrl(url) {
+    if (!url) {
+      return '';
+    }
+
     try {
       const urlObj = new URL(url);
       return urlObj.hostname + urlObj.pathname;
@@ -247,7 +260,7 @@ class TabSearcher {
         .filter(tab => tab.id !== this.currentTabId && !tab.pinned)
         .map(tab => tab.id);
 
-      if (tabsToClose.length > 0) {
+      if (tabsToClose.length > 0 && this.currentTabId !== null) {
         await chrome.tabs.remove(tabsToClose);
         await this.loadTabs();
       }
