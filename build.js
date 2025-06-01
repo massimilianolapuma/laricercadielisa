@@ -1,6 +1,11 @@
-const fs = require('fs');
-const path = require('path');
-const { execSync } = require('child_process');
+import fs from 'fs';
+import path from 'path';
+import { execSync } from 'child_process';
+import { fileURLToPath } from 'url';
+
+// __dirname workaround for ESM
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Get version increment type from command line
 const incrementType = process.argv[2] || 'patch'; // major, minor, or patch
@@ -9,28 +14,34 @@ const incrementType = process.argv[2] || 'patch'; // major, minor, or patch
 const manifestPath = path.join(__dirname, 'manifest.json');
 const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
 
-// Parse current version
-const currentVersion = manifest.version.split('.').map(Number);
-const oldVersion = manifest.version;
+// Parse current version safely, fallback to [0,0,0] if missing or malformed
+let currentVersionArr = [0, 0, 0];
+if (typeof manifest.version === 'string') {
+  const parts = manifest.version.split('.').map(n => Number.parseInt(n, 10));
+  for (let i = 0; i < 3; i++) {
+    currentVersionArr[i] = Number.isNaN(parts[i]) ? 0 : parts[i];
+  }
+}
+const oldVersion = manifest.version || '0.0.0';
 
 // Increment version based on type
 switch (incrementType) {
   case 'major':
-    currentVersion[0]++;
-    currentVersion[1] = 0;
-    currentVersion[2] = 0;
+    currentVersionArr[0]++;
+    currentVersionArr[1] = 0;
+    currentVersionArr[2] = 0;
     break;
   case 'minor':
-    currentVersion[1]++;
-    currentVersion[2] = 0;
+    currentVersionArr[1]++;
+    currentVersionArr[2] = 0;
     break;
   case 'patch':
   default:
-    currentVersion[2]++;
+    currentVersionArr[2]++;
     break;
 }
 
-const newVersion = currentVersion.join('.');
+const newVersion = currentVersionArr.join('.');
 
 // Update manifest with new version
 manifest.version = newVersion;
@@ -106,9 +117,15 @@ function copyDirectory(src, dest) {
 
 // Create a zip file (optional - requires 'zip' command)
 try {
+  // Ensure dist directory exists
+  const distDir = path.join(__dirname, 'dist');
+  if (!fs.existsSync(distDir)) {
+    fs.mkdirSync(distDir);
+  }
   const zipName = `tab-search-v${newVersion}.zip`;
-  execSync(`cd build && zip -r ../${zipName} ./*`);
-  console.log(`\n📦 Created build package: ${zipName}`);
+  const zipPath = path.join(distDir, zipName);
+  execSync(`cd build && zip -r "${zipPath}" ./*`);
+  console.log(`\n📦 Created build package: dist/${zipName}`);
 } catch (error) {
   console.warn(`⚠️  Failed to create zip package: ${error.message}`);
   console.log(

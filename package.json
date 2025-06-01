@@ -4,6 +4,10 @@
     "description": "A Chrome extension for searching through all opened tabs",
     "type": "module",
     "scripts": {
+        "build": "node build.js",
+        "build:major": "node build.js major",
+        "build:minor": "node build.js minor",
+        "build:patch": "node build.js patch",
         "test": "vitest",
         "test:ui": "vitest --ui",
         "test:coverage": "vitest --coverage",
@@ -11,8 +15,7 @@
         "test:run": "vitest run",
         "lint": "eslint popup.js tests/",
         "lint:fix": "eslint popup.js tests/ --fix",
-        "dev": "npm run test",
-        "build": "npm run test:run && npm run lint"
+        "dev": "npm run test"
     },
     "devDependencies": {
         "@vitest/ui": "^1.0.0",
