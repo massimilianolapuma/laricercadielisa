@@ -128,8 +128,8 @@ class TabSearcher {
   }
 
   updateStats() {
-    this.tabCountEl.textContent = `${this.tabs.length} tab${
-      this.tabs.length !== 1 ? 's' : ''
+    this.tabCountEl.textContent = `${this.filteredTabs.length} tab${
+      this.filteredTabs.length !== 1 ? 's' : ''
     }`;
 
     const query = this.searchInput.value.trim();
