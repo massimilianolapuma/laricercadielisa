@@ -1,10 +1,30 @@
 # GitHub Copilot Instructions for Tab Search Chrome Extension
 
+## Environment Configuration
+
+### Terminal & Build Environment
+
+- **Operating System**: macOS with zsh shell
+- **Terminal Commands**:
+  - DO NOT use `timeout` command (not available in macOS by default)
+  - Use standard Unix commands or `gtimeout` if timeout functionality is needed
+  - Before working on the background output always wait for build and test completion - they typically take 10-30 seconds
+  - Do not interrupt or timeout test runs prematurely
+
+### Testing & Build Guidelines
+
+- **Test Execution**: Always allow tests to complete fully before proceeding
+- **Build Process**: Wait for compilation and bundling to finish completely
+- **Coverage Reports**: Allow time for coverage generation (can take several seconds)
+- **Performance**: Tests may take longer with large tab datasets or complex scenarios
+
 ## Project Overview
 
 This is a Chrome Extension called "Tab Search" (internal name: laricercadielisa) that allows users to search through all opened browser tabs quickly and efficiently. The extension provides a modern, intuitive interface for tab management with real-time search capabilities.
 
 ## Project Structure
+
+This is the project structure, updated every time new files are added.
 
 ```
 laricercadielisa/
@@ -158,6 +178,7 @@ async loadTabs() {
 Every feature addition MUST include:
 
 #### Code Documentation
+
 - JSDoc comments for all public methods and complex functions
 - Inline comments explaining business logic and Chrome API usage
 - README updates for new user-facing features
@@ -176,6 +197,7 @@ async filterTabs(query, caseSensitive = false) {
 ```
 
 #### Feature Documentation
+
 - Update README.md with new features and usage instructions
 - Document any new keyboard shortcuts or UI interactions
 - Include screenshots for visual changes
@@ -184,12 +206,14 @@ async filterTabs(query, caseSensitive = false) {
 ### Version Control Best Practices
 
 #### Commit Standards
+
 - Use conventional commit format: `feat:`, `fix:`, `docs:`, `style:`, `refactor:`, `test:`
 - Include issue/feature references in commit messages
 - Keep commits atomic and focused on single changes
 - Write descriptive commit messages explaining the "why" not just "what"
 
 #### Code Review Requirements
+
 - All features must be reviewed before merging
 - Review checklist includes security, performance, and accessibility
 - Test coverage must be maintained or improved
@@ -198,29 +222,33 @@ async filterTabs(query, caseSensitive = false) {
 ### Performance Monitoring
 
 #### Metrics to Track
+
 - Popup load time (target: <100ms)
 - Search response time (target: <50ms for 100+ tabs)
 - Memory usage with large tab counts
 - CPU usage during intensive filtering
 
 #### Performance Testing
+
 ```javascript
 // Example performance test pattern
-console.time('tab-filter');
+console.time("tab-filter");
 const results = await this.filterTabs(query);
-console.timeEnd('tab-filter');
+console.timeEnd("tab-filter");
 console.log(`Filtered ${this.tabs.length} tabs to ${results.length} results`);
 ```
 
 ### Security & Privacy Guidelines
 
 #### Data Handling
+
 - Never store sensitive tab information persistently
 - Minimize data retention in memory
 - Clear search history and cached data appropriately
 - Follow principle of least privilege for permissions
 
 #### Content Security
+
 - All dynamic content must be sanitized
 - No eval() or similar unsafe patterns
 - Validate all Chrome API responses
@@ -229,6 +257,7 @@ console.log(`Filtered ${this.tabs.length} tabs to ${results.length} results`);
 ### Release Process
 
 #### Pre-Release Checklist
+
 - [ ] All tests pass (manual and automated)
 - [ ] Performance benchmarks meet targets
 - [ ] Security review completed
@@ -237,6 +266,7 @@ console.log(`Filtered ${this.tabs.length} tabs to ${results.length} results`);
 - [ ] Change log updated with new features/fixes
 
 #### Post-Release Monitoring
+
 - Monitor extension performance metrics
 - Track user feedback and error reports
 - Plan hotfixes for critical issues
@@ -247,6 +277,7 @@ console.log(`Filtered ${this.tabs.length} tabs to ${results.length} results`);
 ### Feature Development Workflow
 
 #### Before Starting Any Feature
+
 1. **Plan & Document**: Write feature specification with user stories
 2. **Design Review**: Create UI mockups and get feedback
 3. **Test Planning**: Define test scenarios and acceptance criteria
@@ -254,6 +285,7 @@ console.log(`Filtered ${this.tabs.length} tabs to ${results.length} results`);
 5. **Performance Impact**: Consider effects on extension performance
 
 #### During Development
+
 1. **Follow TDD**: Write tests before implementing features
 2. **Incremental Commits**: Make small, focused commits with clear messages
 3. **Code Reviews**: Get feedback early and often
@@ -261,6 +293,7 @@ console.log(`Filtered ${this.tabs.length} tabs to ${results.length} results`);
 5. **Manual Testing**: Test continuously during development
 
 #### Before Merging
+
 1. **Full Test Suite**: Run all automated and manual tests
 2. **Performance Check**: Verify no performance regressions
 3. **Security Review**: Check for potential vulnerabilities
@@ -288,7 +321,15 @@ console.log(`Filtered ${this.tabs.length} tabs to ${results.length} results`);
 
 Every feature addition MUST include comprehensive testing:
 
+#### Testing Environment Guidelines
+
+- **Wait for Completion**: Always allow tests to complete fully (typically 3-10 seconds)
+- **No Timeouts**: Do not use `timeout` command on macOS - use `gtimeout` if needed
+- **Coverage Generation**: Allow extra time for coverage reports to generate
+- **Test Commands**: Use `npm test` or `npx vitest run --coverage` and wait for completion
+
 #### Manual Testing Checklist
+
 - [ ] Test with 1, 10, 50, and 100+ tabs
 - [ ] Test with tabs having no favicons or broken favicon URLs
 - [ ] Test with very long tab titles and URLs (500+ characters)
@@ -300,6 +341,7 @@ Every feature addition MUST include comprehensive testing:
 - [ ] Test accessibility with screen readers
 
 #### Automated Testing
+
 - Write unit tests for core logic functions
 - Create integration tests for Chrome API interactions
 - Test error handling and recovery scenarios
@@ -307,6 +349,7 @@ Every feature addition MUST include comprehensive testing:
 - Cross-browser compatibility tests
 
 #### Security Testing
+
 - Validate all user inputs are properly escaped
 - Test CSP compliance
 - Verify no sensitive data leakage
