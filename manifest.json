@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Tab Search",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "Search through all opened tabs quickly and easily",
   "permissions": [
     "tabs",
