@@ -13,13 +13,24 @@
       </header>
 
       <div class="search-section">
-        <input
-          type="text"
-          id="searchInput"
-          placeholder="Search tabs by title or URL..."
-          autocomplete="off"
-          autofocus
-        />
+        <div class="search-input-wrapper">
+          <input
+            type="text"
+            id="searchInput"
+            placeholder="Search tabs by title or URL..."
+            autocomplete="off"
+            autofocus
+          />
+          <button
+            id="exactMatchBtn"
+            class="exact-match-btn"
+            aria-pressed="false"
+            title="Toggle exact word match"
+            data-exact-match="false"
+          >
+            ≡ Exact
+          </button>
+        </div>
         <div class="search-stats">
           <span id="tabCount">0 tabs</span>
           <span id="matchCount"></span>

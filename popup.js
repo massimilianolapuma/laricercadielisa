@@ -3,6 +3,7 @@ class TabSearcher {
     this.tabs = [];
     this.filteredTabs = [];
     this.currentTabId = null;
+    this.exactMatch = false;
   }
 
   async init() {
@@ -15,6 +16,7 @@ class TabSearcher {
     this.loadingEl = document.getElementById('loading');
     this.refreshBtn = document.getElementById('refreshBtn');
     this.closeOthersBtn = document.getElementById('closeOthersBtn');
+    this.exactMatchBtn = document.getElementById('exactMatchBtn');
 
     // Set up event listeners
     this.setupEventListeners();
@@ -42,6 +44,14 @@ class TabSearcher {
     // Close others button
     this.closeOthersBtn.addEventListener('click', () => {
       this.closeOtherTabs();
+    });
+
+    // Exact match button
+    this.exactMatchBtn.addEventListener('click', () => {
+      this.exactMatch = !this.exactMatch;
+      this.exactMatchBtn.setAttribute('aria-pressed', this.exactMatch ? 'true' : 'false');
+      this.exactMatchBtn.classList.toggle('active', this.exactMatch);
+      this.filterTabs();
     });
   }
 
@@ -81,6 +91,7 @@ class TabSearcher {
 
   filterTabs() {
     const query = this.searchInput.value.toLowerCase().trim();
+    const exact = this.exactMatch;
 
     if (!query) {
       this.filteredTabs = [...this.tabs];
@@ -88,6 +99,11 @@ class TabSearcher {
       this.filteredTabs = this.tabs.filter(tab => {
         const title = tab.title || '';
         const url = tab.url || '';
+        if (exact) {
+          // Match whole word (case-insensitive)
+          const wordRegex = new RegExp(`\\b${this.escapeRegExp(query)}\\b`, 'i');
+          return wordRegex.test(title) || wordRegex.test(url);
+        }
         const titleMatch = title.toLowerCase().includes(query);
         const urlMatch = url.toLowerCase().includes(query);
         return titleMatch || urlMatch;
@@ -95,6 +111,15 @@ class TabSearcher {
     }
 
     this.updateUI();
+  }
+
+  /**
+   * Escape RegExp special characters for exact match
+   * @param {string} s
+   * @returns {string}
+   */
+  escapeRegExp(s) {
+    return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   }
 
   updateUI() {
