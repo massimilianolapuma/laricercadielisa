@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Tab Search",
-  "version": "1.0.6",
+  "version": "1.0.8",
   "description": "Search through all opened tabs quickly and easily",
   "permissions": [
     "tabs",
@@ -11,7 +11,10 @@
     "default_popup": "popup.html",
     "default_title": "Search Tabs",
     "default_icon": {
-      "16": "icons/icon16.svg"
+      "16": "icons/icon.png",
+      "32": "icons/icon.png",
+      "48": "icons/icon.png",
+      "128": "icons/icon.png"
     }
   },
   "icons": {
