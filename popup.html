@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tab Search</title>
+    <link rel="stylesheet" href="popup.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>🔍 Tab Search</h1>
+      </header>
+
+      <div class="search-section">
+        <div class="search-input-wrapper">
+          <input
+            type="text"
+            id="searchInput"
+            placeholder="Search tabs by title or URL..."
+            autocomplete="off"
+            autofocus
+          />
+          <button
+            id="exactMatchBtn"
+            class="exact-match-btn"
+            aria-pressed="false"
+            title="Toggle exact word match"
+            data-exact-match="false"
+          >
+            <i class="fa-solid fa-i-cursor" aria-hidden="true"></i>
+            <span class="sr-only">Exact Match</span>
+          </button>
+        </div>
+        <div class="search-stats">
+          <span id="tabCount">0 tabs</span>
+          <span id="matchCount"></span>
+        </div>
+      </div>
+
+      <div class="tabs-container">
+        <div id="tabsList" class="tabs-list">
+          <!-- Tabs will be populated here -->
+        </div>
+
+        <div id="noResults" class="no-results" style="display: none">
+          <div class="no-results-icon">🔍</div>
+          <p>No tabs found matching your search</p>
+        </div>
+
+        <div id="loading" class="loading">
+          <div class="loading-spinner"></div>
+          <p>Loading tabs...</p>
+        </div>
+      </div>
+
+      <footer>
+        <div class="actions">
+          <button
+            id="closeOthersBtn"
+            class="action-btn secondary"
+            title="Close all tabs except current"
+          >
+            Close Others
+          </button>
+          <button
+            id="refreshBtn"
+            class="action-btn primary"
+            title="Refresh tab list"
+          >
+            ↻ Refresh
+          </button>
+        </div>
+      </footer>
+    </div>
+
+    <script type="module" src="popup-init.js"></script>
+  </body>
+</html>

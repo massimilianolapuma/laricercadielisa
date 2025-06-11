@@ -1,0 +1,4 @@
+node_modules/
+coverage/
+dist/tab-search-*.zip
+.DS_Store
