@@ -5,9 +5,10 @@
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: #333;
+  color: #fff;
   width: 400px;
   height: 600px;
   overflow: hidden;
@@ -59,7 +60,9 @@ header h1 {
   font-size: 1.1rem;
   background: #fff;
   color: #222;
-  transition: border 0.2s, box-shadow 0.2s;
+  transition:
+    border 0.2s,
+    box-shadow 0.2s;
   outline: none;
   min-width: 0;
   box-sizing: border-box;
@@ -67,7 +70,7 @@ header h1 {
 
 #searchInput:focus {
   border-color: #667eea;
-  box-shadow: 0 0 0 2px rgba(102,126,234,0.15);
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.15);
 }
 
 .exact-match-btn {
@@ -83,9 +86,11 @@ header h1 {
   color: #667eea;
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.2s, box-shadow 0.2s;
+  transition:
+    background 0.2s,
+    box-shadow 0.2s;
   outline: none;
-  box-shadow: 0 1px 4px rgba(102,126,234,0.08);
+  box-shadow: 0 1px 4px rgba(102, 126, 234, 0.08);
   z-index: 2;
   height: calc(100% - 0.6rem);
   min-width: 2rem;
@@ -100,7 +105,7 @@ header h1 {
   background: #667eea;
   color: #fff;
   border: 1.5px solid #667eea;
-  box-shadow: 0 2px 8px rgba(55,66,250,0.12);
+  box-shadow: 0 2px 8px rgba(55, 66, 250, 0.12);
 }
 
 .exact-match-btn:focus {
@@ -159,7 +164,11 @@ header h1 {
 }
 
 .tab-item.active {
-  background: linear-gradient(90deg, rgba(102, 126, 234, 0.1) 0%, rgba(102, 126, 234, 0.05) 100%);
+  background: linear-gradient(
+    90deg,
+    rgba(102, 126, 234, 0.1) 0%,
+    rgba(102, 126, 234, 0.05) 100%
+  );
   border-left-color: #667eea;
 }
 
@@ -237,7 +246,8 @@ header h1 {
   font-weight: 600;
 }
 
-.no-results, .loading {
+.no-results,
+.loading {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -264,8 +274,12 @@ header h1 {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 footer {
