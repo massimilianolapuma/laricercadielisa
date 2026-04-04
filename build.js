@@ -1,7 +1,7 @@
-import fs from 'fs';
-import path from 'path';
-import { execSync } from 'child_process';
-import { fileURLToPath } from 'url';
+import fs from 'node:fs';
+import path from 'node:path';
+import { execSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 
 // __dirname workaround for ESM
 const __filename = fileURLToPath(import.meta.url);
@@ -15,7 +15,7 @@ const manifestPath = path.join(__dirname, 'manifest.json');
 const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
 
 // Parse current version safely, fallback to [0,0,0] if missing or malformed
-let currentVersionArr = [0, 0, 0];
+const currentVersionArr = [0, 0, 0];
 if (typeof manifest.version === 'string') {
   const parts = manifest.version.split('.').map(n => Number.parseInt(n, 10));
   for (let i = 0; i < 3; i++) {
