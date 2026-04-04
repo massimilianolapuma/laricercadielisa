@@ -90,27 +90,70 @@ class TabSearcher {
   }
 
   filterTabs() {
-    const query = this.searchInput.value.toLowerCase().trim();
+    const rawQuery = this.searchInput.value.trim();
     const exact = this.exactMatch;
 
-    if (!query) {
+    console.log('=== filterTabs DEBUG ===');
+    console.log('rawQuery:', rawQuery);
+    console.log('this.tabs.length:', this.tabs.length);
+
+    if (!rawQuery) {
       this.filteredTabs = [...this.tabs];
+      console.log('No query, returning all tabs:', this.filteredTabs.length);
     } else {
+      const queryLower = rawQuery.toLowerCase();
+      // FIX v1.0.12: split into tokens for AND-logic multi-word search
+      // e.g. 'pivello 5' -> ['pivello','5'], each must match somewhere
+      const tokens = queryLower.split(/\s+/).filter(Boolean);
+      console.log('queryLower:', queryLower);
+      console.log('tokens:', tokens);
+
       this.filteredTabs = this.tabs.filter(tab => {
-        const title = tab.title || '';
-        const url = tab.url || '';
+        const title = (tab.title || '').toLowerCase();
+        const rawUrl = (tab.url || '').toLowerCase();
+        // FIX v1.0.12: decode URL so 'pivello+5'/'pivello%205' match 'pivello 5'
+        const decodedUrl = this.safeDecodeUrl(rawUrl);
+
         if (exact) {
-          // Match whole word (case-insensitive)
-          const wordRegex = new RegExp(`\\b${this.escapeRegExp(query)}\\b`, 'i');
-          return wordRegex.test(title) || wordRegex.test(url);
+          const wordRegex = new RegExp(`\\b${this.escapeRegExp(queryLower)}\\b`, 'i');
+          const result = wordRegex.test(title) || wordRegex.test(rawUrl) || wordRegex.test(decodedUrl);
+          console.log(`  Tab "${tab.title}" (exact): ${result}`);
+          return result;
         }
-        const titleMatch = title.toLowerCase().includes(query);
-        const urlMatch = url.toLowerCase().includes(query);
-        return titleMatch || urlMatch;
+
+        const result = tokens.every(token =>
+          title.includes(token) ||
+          rawUrl.includes(token) ||
+          decodedUrl.includes(token)
+        );
+        console.log(`  Tab "${tab.title}": ${result}`, { title, rawUrl, decodedUrl, tokens });
+        return result;
       });
+      console.log('Filtered tabs:', this.filteredTabs.length);
     }
 
+    console.log('filteredTabs.length:', this.filteredTabs.length);
+    console.log('=== END filterTabs DEBUG ===\n');
     this.updateUI();
+  }
+
+  /**
+   * Safely decode a URL for searching.
+   * Handles + (form-encoding) and %XX (percent-encoding).
+   * @param {string} url - Lowercased raw URL
+   * @returns {string}
+   */
+  safeDecodeUrl(url) {
+    try {
+      const decoded = decodeURIComponent(url.replace(/\+/g, ' '));
+      if (decoded !== url) {
+        console.log(`  safeDecodeUrl: "${url}" -> "${decoded}"`);
+      }
+      return decoded;
+    } catch (error) {
+      console.warn('URL decode error:', { url, errorMessage: error.message });
+      return url;
+    }
   }
 
   /**
@@ -151,29 +194,39 @@ class TabSearcher {
 
     this.showNoResults(false);
 
-    const tabsHtml = this.filteredTabs
-      .map(tab => this.createTabHTML(tab))
-      .join('');
-    this.tabsList.innerHTML = tabsHtml;
+    try {
+      const tabsHtml = this.filteredTabs
+        .map(tab => this.createTabHTML(tab))
+        .join('');
+      this.tabsList.innerHTML = tabsHtml;
 
-    // Add click event listeners
-    this.tabsList.querySelectorAll('.tab-item').forEach(tabEl => {
-      const tabId = parseInt(tabEl.dataset.tabId, 10);
+      // Add click event listeners
+      this.tabsList.querySelectorAll('.tab-item').forEach(tabEl => {
+        const tabId = parseInt(tabEl.dataset.tabId, 10);
 
-      tabEl.addEventListener('click', e => {
-        if (!e.target.classList.contains('close-tab')) {
-          this.switchToTab(tabId);
+        tabEl.addEventListener('click', e => {
+          if (!e.target.classList.contains('close-tab')) {
+            this.switchToTab(tabId);
+          }
+        });
+
+        const closeBtn = tabEl.querySelector('.close-tab');
+        if (closeBtn) {
+          closeBtn.addEventListener('click', e => {
+            e.stopPropagation();
+            this.closeTab(tabId);
+          });
         }
       });
-
-      const closeBtn = tabEl.querySelector('.close-tab');
-      if (closeBtn) {
-        closeBtn.addEventListener('click', e => {
-          e.stopPropagation();
-          this.closeTab(tabId);
-        });
-      }
-    });
+    } catch (error) {
+      console.error('Error rendering tabs:', error);
+      this.tabsList.innerHTML = `
+        <div style="padding: 20px; color: #e53e3e; text-align: center; font-size: 12px;">
+          <p>⚠️ Error rendering tabs. Please try refreshing.</p>
+          <p style="font-size: 10px; color: #a0aec0; margin-top: 8px;">${error.message}</p>
+        </div>
+      `;
+    }
   }
 
   createTabHTML(tab) {
@@ -214,8 +267,13 @@ class TabSearcher {
     }
 
     const escapedText = this.escapeHtml(text);
-    const escapedQuery = this.escapeHtml(query);
-    const regex = new RegExp(`(${escapedQuery})`, 'gi');
+    // FIX v1.0.13: split into tokens, escape for regex only (not HTML)
+    // HTML escaping is already done on escapedText, tokens are raw query text
+    const tokens = query.split(/\s+/).filter(Boolean);
+    const pattern = tokens
+      .map(token => this.escapeRegExp(token))
+      .join('|');
+    const regex = new RegExp(`(${pattern})`, 'gi');
 
     return escapedText.replace(regex, '<span class="highlight">$1</span>');
   }

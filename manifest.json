@@ -1,12 +1,16 @@
 {
   "manifest_version": 3,
   "name": "Tab Search",
-  "version": "1.0.11",
+  "version": "1.0.15",
   "description": "Search through all opened tabs quickly and easily",
   "permissions": [
     "tabs",
-    "activeTab"
+    "activeTab",
+    "windows"
   ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; img-src 'self'  https:"
+  },
   "action": {
     "default_popup": "popup.html",
     "default_title": "Search Tabs",

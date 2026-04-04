@@ -38,6 +38,12 @@ function createMockTabs(count) {
   );
 }
 
+/**
+ * Unit tests for TabSearcher class
+ * Tests core functionality like filtering, escaping, and utility methods
+ * Includes fix for multi-word search bug (v1.0.13)
+ */
+
 describe('TabSearcher Unit Tests', () => {
   let tabSearcher;
 
@@ -296,6 +302,92 @@ describe('TabSearcher Unit Tests', () => {
 
       // Should find tabs that start with "Tab 1" (Tab 1, Tab 10-19, Tab 100-199, etc.)
       expect(tabSearcher.filteredTabs.length).toBeGreaterThan(100);
+    });
+  });
+
+  describe('Multi-word Search (Bug Fix v1.0.13)', () => {
+    it('should correctly filter tabs with multi-word query "pivello 5"', () => {
+      tabSearcher.tabs = [
+        createMockTab({
+          id: 1,
+          title: 'Gmail - Search pivello 5',
+          url: 'https://mail.google.com/search?q=pivello%205'
+        }),
+        createMockTab({
+          id: 2,
+          title: 'Gmail - Search pivello',
+          url: 'https://mail.google.com/search?q=pivello'
+        }),
+        createMockTab({
+          id: 3,
+          title: 'Document pivello 5',
+          url: 'https://docs.google.com/doc'
+        }),
+        createMockTab({
+          id: 4,
+          title: 'Test page 5',
+          url: 'https://example.com/test5'
+        })
+      ];
+
+      tabSearcher.searchInput.value = 'pivello 5';
+      tabSearcher.filterTabs();
+
+      // Should find tabs with BOTH "pivello" AND "5"
+      expect(tabSearcher.filteredTabs).toHaveLength(2);
+      expect(tabSearcher.filteredTabs[0].id).toBe(1);
+      expect(tabSearcher.filteredTabs[1].id).toBe(3);
+    });
+
+    it('should correctly highlight multi-word text "pivello 5"', () => {
+      const text = 'Gmail - Search pivello 5';
+      const query = 'pivello 5';
+      const highlighted = tabSearcher.highlightText(text, query);
+
+      // Should contain highlight spans for both "pivello" and "5"
+      expect(highlighted).toContain('<span class="highlight">pivello</span>');
+      expect(highlighted).toContain('<span class="highlight">5</span>');
+
+      // Should not have unescaped HTML
+      expect(highlighted).not.toContain('<script>');
+
+      // Should preserve original text structure
+      expect(highlighted).toContain('Gmail - Search');
+    });
+
+    it('should handle multi-word search with special characters', () => {
+      tabSearcher.tabs = [
+        createMockTab({
+          id: 1,
+          title: 'Search & Filter test',
+          url: 'https://example.com/search?q=filter&test=1'
+        }),
+        createMockTab({
+          id: 2,
+          title: 'Normal page',
+          url: 'https://example.com/page'
+        })
+      ];
+
+      tabSearcher.searchInput.value = 'search filter';
+      tabSearcher.filterTabs();
+
+      // Should find tab 1 (has both "search" and "filter")
+      expect(tabSearcher.filteredTabs).toHaveLength(1);
+      expect(tabSearcher.filteredTabs[0].id).toBe(1);
+    });
+
+    it('should correctly highlight special characters without XSS', () => {
+      const text = 'Test & Alert <script>';
+      const query = 'test alert';
+      const highlighted = tabSearcher.highlightText(text, query);
+
+      // Should escape HTML entities
+      expect(highlighted).toContain('&amp;');
+      expect(highlighted).toContain('&lt;script&gt;');
+
+      // Should NOT contain actual script tag
+      expect(highlighted).not.toContain('<script>');
     });
   });
 });
