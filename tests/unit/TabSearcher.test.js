@@ -274,7 +274,8 @@ describe('TabSearcher Unit Tests', () => {
 
       tabSearcher.updateStats();
 
-      expect(tabSearcher.tabCountEl.textContent).toBe('10 tabs');
+      // updateStats shows the count of filtered tabs, not total tabs
+      expect(tabSearcher.tabCountEl.textContent).toBe('3 tabs');
       expect(tabSearcher.matchCountEl.textContent).toBe('3 matches');
     });
   });

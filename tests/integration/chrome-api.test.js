@@ -34,7 +34,7 @@ class MockTabSearcherForIntegration {
 
       this.filteredTabs = [...this.tabs];
       return this.tabs;
-    } catch (error) {
+    } catch (_error) {
       throw new Error('Failed to load tabs');
     }
   }

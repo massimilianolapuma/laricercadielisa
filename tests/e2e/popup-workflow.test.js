@@ -60,7 +60,7 @@ describe('Popup Workflow E2E Tests', () => {
             this.filteredTabs = [...this.tabs];
             this.renderTabs();
             this.hideLoading();
-          } catch (error) {
+          } catch (_error) {
             this.showError('Failed to load tabs');
           }
         }
@@ -137,7 +137,7 @@ describe('Popup Workflow E2E Tests', () => {
             await chrome.tabs.update(tab.id, { active: true });
             await chrome.windows.update(tab.windowId, { focused: true });
             window.close();
-          } catch (error) {
+          } catch (_error) {
             this.showError('Failed to switch to tab');
           }
         }

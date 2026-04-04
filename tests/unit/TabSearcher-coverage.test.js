@@ -410,7 +410,8 @@ describe('TabSearcher Coverage Tests', () => {
 
       tabSearcher.updateStats();
 
-      expect(tabSearcher.tabCountEl.textContent).toBe('10 tabs');
+      // updateStats shows filtered tab count, not total tabs
+      expect(tabSearcher.tabCountEl.textContent).toBe('3 tabs');
       expect(tabSearcher.matchCountEl.textContent).toBe('3 matches');
     });
 

@@ -97,17 +97,33 @@ afterEach(() => {
 
 // Enhanced DOM setup for comprehensive testing
 beforeEach(() => {
+  // Ensure document object is properly set up
+  if (!document || !document.createElement) {
+    console.warn('Document not properly initialized in test environment');
+    return;
+  }
+
   // Ensure document.body exists in jsdom environment
   if (!document.body) {
-    document.body = document.createElement('body');
-    document.documentElement.appendChild(document.body);
+    try {
+      document.body = document.createElement('body');
+      if (document.documentElement) {
+        document.documentElement.appendChild(document.body);
+      }
+    } catch (e) {
+      console.warn('Could not create body element:', e);
+      return;
+    }
   }
 
   // Reset DOM
-  document.body.innerHTML = '';
+  if (document.body) {
+    document.body.innerHTML = '';
+  }
 
-  // Create basic popup structure that tests expect
-  const popupHTML = `
+  // Create basic popup structure that tests expect (if body exists)
+  if (document.body) {
+    const popupHTML = `
     <div class="popup-container">
       <div class="search-container">
         <input type="text" id="searchInput" placeholder="Search tabs..." />
@@ -126,7 +142,8 @@ beforeEach(() => {
     </div>
   `;
 
-  document.body.innerHTML = popupHTML;
+    document.body.innerHTML = popupHTML;
+  }
 
   // Reset Chrome API mocks with default successful responses
   const mockTabs = [

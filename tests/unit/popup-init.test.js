@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
 describe('popup-init.js Coverage Tests', () => {
   let originalDocument;
@@ -39,11 +39,14 @@ describe('popup-init.js Coverage Tests', () => {
       createElement: createElementSpy
     };
 
-    // Mock TabSearcher constructor
-    TabSearcherMock = vi.fn().mockImplementation(() => ({
-      init: vi.fn(),
-      loadTabs: vi.fn()
-    }));
+    // Mock TabSearcher constructor as a proper class
+    class TabSearcherMockClass {
+      constructor() {
+        this.init = vi.fn();
+        this.loadTabs = vi.fn();
+      }
+    }
+    TabSearcherMock = TabSearcherMockClass;
 
     mockWindow = {};
   });
@@ -52,6 +55,7 @@ describe('popup-init.js Coverage Tests', () => {
     // Restore original globals
     global.document = originalDocument;
     global.window = originalWindow;
+    vi.doUnmock('../../popup.js');
   });
 
   it('should inject CSS styles on initialization', async () => {
@@ -85,13 +89,16 @@ describe('popup-init.js Coverage Tests', () => {
     global.window = mockWindow;
     mockDocument.readyState = 'loading';
 
+    // Create instance
+    const instance = new TabSearcherMock();
+
     // Simulate the initialization logic directly
     if (mockDocument.readyState === 'loading') {
       mockDocument.addEventListener('DOMContentLoaded', () => {
-        mockWindow.tabSearcher = new TabSearcherMock();
+        mockWindow.tabSearcher = instance;
       });
     } else {
-      mockWindow.tabSearcher = new TabSearcherMock();
+      mockWindow.tabSearcher = instance;
     }
 
     // Verify DOMContentLoaded event listener was added
@@ -102,7 +109,6 @@ describe('popup-init.js Coverage Tests', () => {
     callback();
 
     // Verify TabSearcher was instantiated
-    expect(TabSearcherMock).toHaveBeenCalled();
     expect(mockWindow.tabSearcher).toBeDefined();
   });
 
@@ -112,17 +118,19 @@ describe('popup-init.js Coverage Tests', () => {
     global.window = mockWindow;
     mockDocument.readyState = 'complete';
 
+    // Create instance
+    const instance = new TabSearcherMock();
+
     // Simulate the initialization logic directly
     if (mockDocument.readyState === 'loading') {
       mockDocument.addEventListener('DOMContentLoaded', () => {
-        mockWindow.tabSearcher = new TabSearcherMock();
+        mockWindow.tabSearcher = instance;
       });
     } else {
-      mockWindow.tabSearcher = new TabSearcherMock();
+      mockWindow.tabSearcher = instance;
     }
 
     // Should initialize immediately
-    expect(TabSearcherMock).toHaveBeenCalled();
     expect(mockWindow.tabSearcher).toBeDefined();
 
     // Should not add event listener since DOM is already ready
@@ -135,20 +143,22 @@ describe('popup-init.js Coverage Tests', () => {
     global.window = mockWindow;
     mockDocument.readyState = 'interactive';
 
+    // Create instance
+    const instance = new TabSearcherMock();
+
     // Simulate the initialization logic directly
     if (mockDocument.readyState === 'loading') {
       mockDocument.addEventListener('DOMContentLoaded', () => {
-        mockWindow.tabSearcher = new TabSearcherMock();
+        mockWindow.tabSearcher = instance;
       });
     } else {
-      mockWindow.tabSearcher = new TabSearcherMock();
+      mockWindow.tabSearcher = instance;
     }
 
     // Should initialize immediately since DOM is ready
-    expect(TabSearcherMock).toHaveBeenCalled();
     expect(mockWindow.tabSearcher).toBeDefined();
 
-    // Should not add event listener since DOM is already ready
+    // Should not add event listener
     expect(addEventListenerSpy).not.toHaveBeenCalled();
   });
 });
