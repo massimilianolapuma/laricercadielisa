@@ -445,8 +445,8 @@ class TabSearcher {
   saveSearchQuery(value) {
     try {
       chrome.storage.session.set({ searchQuery: value });
-    } catch (_e) {
-      // storage not available (e.g. in test environment)
+    } catch (e) {
+      console.warn('Storage session unavailable (saveSearchQuery):', e);
     }
   }
 
@@ -458,8 +458,8 @@ class TabSearcher {
         this.toggleClearBtn();
         this.filterTabs();
       }
-    } catch (_e) {
-      // storage not available (e.g. in test environment)
+    } catch (e) {
+      console.warn('Storage session unavailable (restoreSearchQuery):', e);
     }
   }
 }

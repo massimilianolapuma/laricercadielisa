@@ -26,7 +26,7 @@ body {
 }
 
 header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #4854c8 0%, #6b3fa0 100%);
   color: white;
   padding: 16px 20px;
   text-align: center;
@@ -69,8 +69,8 @@ header h1 {
 }
 
 #searchInput:focus {
-  border-color: #667eea;
-  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.15);
+  border-color: #4854c8;
+  box-shadow: 0 0 0 2px rgba(72, 84, 200, 0.15);
 }
 
 .exact-match-btn {
@@ -83,14 +83,14 @@ header h1 {
   border: none;
   border-radius: 0.4rem;
   background: #e1e5e9;
-  color: #667eea;
+  color: #3730a3;
   font-weight: 500;
   cursor: pointer;
   transition:
     background 0.2s,
     box-shadow 0.2s;
   outline: none;
-  box-shadow: 0 1px 4px rgba(102, 126, 234, 0.08);
+  box-shadow: 0 1px 4px rgba(55, 48, 163, 0.08);
   z-index: 2;
   height: calc(100% - 0.6rem);
   min-width: 2rem;
@@ -102,14 +102,14 @@ header h1 {
 
 .exact-match-btn[aria-pressed="true"],
 .exact-match-btn.active {
-  background: #667eea;
+  background: #4854c8;
   color: #fff;
-  border: 1.5px solid #667eea;
-  box-shadow: 0 2px 8px rgba(55, 66, 250, 0.12);
+  border: 1.5px solid #4854c8;
+  box-shadow: 0 2px 8px rgba(72, 84, 200, 0.12);
 }
 
 .exact-match-btn:focus {
-  outline: 2px solid #667eea;
+  outline: 2px solid #4854c8;
 }
 
 .exact-match-btn i {
@@ -127,7 +127,7 @@ header h1 {
   border: none;
   border-radius: 0.4rem;
   background: #e1e5e9;
-  color: #6c757d;
+  color: #4a5568;
   cursor: pointer;
   transition:
     background 0.2s,
@@ -148,7 +148,7 @@ header h1 {
 }
 
 .clear-search-btn:focus {
-  outline: 2px solid #667eea;
+  outline: 2px solid #4854c8;
 }
 
 .clear-search-btn i {
@@ -199,16 +199,16 @@ header h1 {
 
 .tab-item:hover {
   background: #f8f9fa;
-  border-left-color: #667eea;
+  border-left-color: #4854c8;
 }
 
 .tab-item.active {
   background: linear-gradient(
     90deg,
-    rgba(102, 126, 234, 0.1) 0%,
-    rgba(102, 126, 234, 0.05) 100%
+    rgba(72, 84, 200, 0.1) 0%,
+    rgba(72, 84, 200, 0.05) 100%
   );
-  border-left-color: #667eea;
+  border-left-color: #4854c8;
 }
 
 .tab-favicon {
@@ -225,7 +225,7 @@ header h1 {
   align-items: center;
   justify-content: center;
   font-size: 10px;
-  color: #6c757d;
+  color: #4a5568;
 }
 
 .tab-info {
@@ -245,7 +245,7 @@ header h1 {
 
 .tab-url {
   font-size: 11px;
-  color: #718096;
+  color: #4a5568;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -265,7 +265,7 @@ header h1 {
   background: none;
   border: none;
   font-size: 16px;
-  color: #a0aec0;
+  color: #4a5568;
   cursor: pointer;
   padding: 4px;
   border-radius: 4px;
@@ -278,8 +278,8 @@ header h1 {
 }
 
 .highlight {
-  background: linear-gradient(90deg, #ffd93d 0%, #ff6b6b 100%);
-  color: white;
+  background: linear-gradient(90deg, #fbbf24 0%, #fb923c 100%);
+  color: #1e293b;
   padding: 1px 3px;
   border-radius: 3px;
   font-weight: 600;
@@ -292,7 +292,7 @@ header h1 {
   align-items: center;
   justify-content: center;
   height: 200px;
-  color: #718096;
+  color: #4a5568;
   text-align: center;
 }
 
@@ -306,7 +306,7 @@ header h1 {
   width: 32px;
   height: 32px;
   border: 3px solid #e1e5e9;
-  border-top: 3px solid #667eea;
+  border-top: 3px solid #4854c8;
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin-bottom: 16px;
@@ -345,12 +345,12 @@ footer {
 }
 
 .action-btn.primary {
-  background: #667eea;
+  background: #4854c8;
   color: white;
 }
 
 .action-btn.primary:hover {
-  background: #5a6fd8;
+  background: #3d4db0;
   transform: translateY(-1px);
 }
 

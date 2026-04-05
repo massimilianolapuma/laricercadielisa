@@ -463,6 +463,7 @@ describe('TabSearcher Unit Tests', () => {
           throw new Error('Storage unavailable');
         });
         expect(() => tabSearcher.saveSearchQuery('test')).not.toThrow();
+        expect(global.console.warn).toHaveBeenCalled();
       });
     });
 
@@ -494,6 +495,7 @@ describe('TabSearcher Unit Tests', () => {
       it('should handle storage errors gracefully', async () => {
         global.chrome.storage.session.get.mockRejectedValueOnce(new Error('Storage unavailable'));
         await expect(tabSearcher.restoreSearchQuery()).resolves.not.toThrow();
+        expect(global.console.warn).toHaveBeenCalled();
       });
     });
   });
