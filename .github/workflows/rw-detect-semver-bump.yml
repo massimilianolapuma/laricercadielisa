@@ -1,0 +1,191 @@
+# ---------------------------------------------------------------------------
+# Reusable — Detect SemVer Bump from Conventional Commits
+#
+# Calcola il tipo di bump SemVer (major/minor/patch/none) leggendo i commit
+# dal tag dell'ultima release via GitHub API.
+#
+# Patterns supportati:
+#   feat!: …                         → major (minor se version 0.x, bump-minor-pre-major)
+#   BREAKING CHANGE: nel footer      → major (idem)
+#   chore(deps): / chore(ci): /
+#   Build(deps): / Build(deps-dev):  → patch (Dependabot — case-insensitive)
+#   chore / ci / docs / test         → none (nessun bump)
+#
+# Output:
+#   bump-type  — major | minor | patch | none
+#   release-as — stringa versione es. "0.3.0" (vuota se bump=none)
+# ---------------------------------------------------------------------------
+
+name: Reusable — Detect SemVer Bump
+
+on:
+    workflow_call:
+        outputs:
+            bump-type:
+                description: "SemVer bump type: major, minor, patch, or none"
+                value: ${{ jobs.detect-bump.outputs.bump-type }}
+            release-as:
+                description: "Next version string (e.g. 0.3.0) or empty string if bump=none"
+                value: ${{ jobs.detect-bump.outputs.release-as }}
+
+permissions:
+    contents: read
+
+jobs:
+    detect-bump:
+        name: Detect SemVer bump type
+        runs-on: ubuntu-latest
+        timeout-minutes: 10
+
+        outputs:
+            bump-type: ${{ steps.detect-bump.outputs.bump-type }}
+            release-as: ${{ steps.detect-bump.outputs.release-as }}
+
+        steps:
+            # -----------------------------------------------------------------------
+            # Analizza i commit dalla last release via GitHub API.
+            # Applica le regole Conventional Commits per determinare il bump SemVer.
+            # Legge la versione corrente da .release-please-manifest.json.
+            #
+            # [template-injection]: nessun input esterno — usa solo context.sha
+            # e context.repo (valori interni GitHub, non user-controlled).
+            # -----------------------------------------------------------------------
+            - name: Detect bump type from commits
+              id: detect-bump
+              uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+              with:
+                  github-token: ${{ github.token }}
+                  script: |
+                      const BREAKING_HDR = /^[a-z]+(?:\([^)]+\))?!:/;
+                      const BREAKING_FTR = /^BREAKING[ -]CHANGE\s*:/im;
+                      const FEAT_RE      = /^feat(?:\([^)]+\))?:/;
+                      const FIX_RE       = /^(?:fix|perf)(?:\([^)]+\))?:/;
+                      // Dependabot: chore(deps) / chore(ci) / Build(deps) / Build(deps-dev) → patch
+                      const DEPS_RE      = /^(?:chore|build)\((?:deps(?:-dev)?|ci)\):/i;
+
+                      // ── 1. SHA of the latest release tag ───────────────────────
+                      let baseSha = null;
+                      let latestTag = null; // saved for version derivation in step 4
+                      try {
+                          const { data: releases } = await github.rest.repos.listReleases({
+                              owner: context.repo.owner,
+                              repo: context.repo.repo,
+                              per_page: 1,
+                          });
+                          if (releases.length > 0) {
+                              latestTag = releases[0].tag_name; // e.g. "v0.3.0"
+                              const tag = latestTag;
+                              const { data: refObj } = await github.rest.git.getRef({
+                                  owner: context.repo.owner,
+                                  repo: context.repo.repo,
+                                  ref: `tags/${tag}`,
+                              });
+                              // Annotated tags point to a tag object — dereference to commit SHA.
+                              let sha = refObj.object.sha;
+                              if (refObj.object.type === 'tag') {
+                                  const { data: tagObj } = await github.rest.git.getTag({
+                                      owner: context.repo.owner,
+                                      repo: context.repo.repo,
+                                      tag_sha: sha,
+                                  });
+                                  sha = tagObj.object.sha;
+                              }
+                              baseSha = sha;
+                              core.info(`Last release: ${tag} (${sha.substring(0, 7)})`);
+                          }
+                      } catch (e) {
+                          core.warning(`Could not find last release: ${e.message}. Scanning last 50 commits.`);
+                      }
+
+                      // ── 2. Fetch commit subjects since last release ─────────────
+                      let entries = [];
+                      try {
+                          if (baseSha) {
+                              const { data: cmp } = await github.rest.repos.compareCommitsWithBasehead({
+                                  owner: context.repo.owner,
+                                  repo: context.repo.repo,
+                                  basehead: `${baseSha}...${context.sha}`,
+                              });
+                              entries = cmp.commits.map(c => ({
+                                  subj: c.commit.message.split('\n')[0],
+                                  body: c.commit.message,
+                              }));
+                          } else {
+                              const { data: list } = await github.rest.repos.listCommits({
+                                  owner: context.repo.owner,
+                                  repo: context.repo.repo,
+                                  per_page: 50,
+                              });
+                              entries = list.map(c => ({
+                                  subj: c.commit.message.split('\n')[0],
+                                  body: c.commit.message,
+                              }));
+                          }
+                      } catch (e) {
+                          core.warning(`Error fetching commits: ${e.message}`);
+                          core.setOutput('bump-type', 'none');
+                          core.setOutput('release-as', '');
+                          return;
+                      }
+
+                      // ── 3. Determine bump type ──────────────────────────────────
+                      let bump = 'none';
+                      for (const { subj, body } of entries) {
+                          if (BREAKING_HDR.test(subj) || BREAKING_FTR.test(body)) {
+                              bump = 'major';
+                              break;
+                          }
+                          if (FEAT_RE.test(subj) && bump !== 'major') { bump = 'minor'; continue; }
+                          if (FIX_RE.test(subj)  && bump === 'none')  { bump = 'patch'; continue; }
+                          if (DEPS_RE.test(subj) && bump === 'none')  { bump = 'patch'; }
+                      }
+
+                      if (bump === 'none') {
+                          core.info('No release-worthy commits — skipping version computation.');
+                          core.setOutput('bump-type', 'none');
+                          core.setOutput('release-as', '');
+                          return;
+                      }
+
+                      // ── 4. Determine current version ───────────────────────────
+                      // Primary source: latest GitHub Release tag name (always correct
+                      // in Scenario B — direct-tag, where the manifest is never updated).
+                      // Fallback: manifest (Scenario A — release-please keeps it in sync,
+                      // or when there are no releases yet).
+                      let current = '0.0.0';
+                      if (latestTag) {
+                          current = latestTag.replace(/^v/, '');
+                          core.info(`Current version (latest release tag): ${current}`);
+                      } else {
+                          try {
+                              const { data: file } = await github.rest.repos.getContent({
+                                  owner: context.repo.owner,
+                                  repo: context.repo.repo,
+                                  path: '.release-please-manifest.json',
+                              });
+                              const manifest = JSON.parse(
+                                  Buffer.from(file.content, 'base64').toString('utf8')
+                              );
+                              current = manifest['.'] || '0.0.0';
+                              core.info(`Current version (manifest fallback): ${current}`);
+                          } catch (e) {
+                              core.warning(`Could not read manifest: ${e.message}. Using 0.0.0.`);
+                          }
+                      }
+
+                      // ── 5. Compute next version (bump-minor-pre-major: true) ────
+                      const [maj, min, pat] = current.split('.').map(Number);
+                      let nMaj = maj, nMin = min, nPat = pat;
+                      if (bump === 'major' && maj === 0) {
+                          // bump-minor-pre-major: breaking → MINOR when version < 1.0.0
+                          core.info('Breaking change + version is 0.x → MINOR (bump-minor-pre-major)');
+                          nMin++; nPat = 0;
+                          bump = 'minor';
+                      } else if (bump === 'major') { nMaj++; nMin = 0; nPat = 0; }
+                      else if (bump === 'minor')   { nMin++; nPat = 0; }
+                      else                         { nPat++; }
+
+                      const nextVersion = `${nMaj}.${nMin}.${nPat}`;
+                      core.setOutput('bump-type', bump);
+                      core.setOutput('release-as', nextVersion);
+                      core.info(`Bump: ${bump} → release-as: ${nextVersion}`);
