@@ -41,7 +41,6 @@ concurrency:
     cancel-in-progress: false
 
 permissions:
-    contents: write
     actions: read
 
 jobs:
@@ -95,6 +94,8 @@ jobs:
     create-tag:
         name: Create & push tag v${{ needs.detect.outputs.release-as }}
         needs: [detect, tag-check]
+        permissions:
+            contents: write
         if: >-
             vars.RELEASE_MODE != 'release-please' &&
             needs.detect.outputs.bump-type != 'none' &&
