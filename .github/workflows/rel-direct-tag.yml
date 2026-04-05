@@ -51,7 +51,6 @@ jobs:
     detect:
         name: Detect SemVer bump
         uses: ./.github/workflows/rw-detect-semver-bump.yml
-        secrets: inherit
 
     # --------------------------------------------------------------------------
     # Job 2: verifica che HEAD non sia già taggato con un tag SemVer.
