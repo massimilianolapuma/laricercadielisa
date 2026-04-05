@@ -17,18 +17,23 @@ class TabSearcher {
     this.refreshBtn = document.getElementById('refreshBtn');
     this.closeOthersBtn = document.getElementById('closeOthersBtn');
     this.exactMatchBtn = document.getElementById('exactMatchBtn');
+    this.clearSearchBtn = document.getElementById('clearSearchBtn');
 
     // Set up event listeners
     this.setupEventListeners();
 
     // Load tabs
     await this.loadTabs();
+
+    // Restore persisted search query from previous popup session
+    await this.restoreSearchQuery();
   }
 
   setupEventListeners() {
     // Search input
     this.searchInput.addEventListener('input', () => {
       this.filterTabs();
+      this.toggleClearBtn();
     });
 
     // Keyboard navigation
@@ -52,6 +57,11 @@ class TabSearcher {
       this.exactMatchBtn.setAttribute('aria-pressed', this.exactMatch ? 'true' : 'false');
       this.exactMatchBtn.classList.toggle('active', this.exactMatch);
       this.filterTabs();
+    });
+
+    // Clear search button
+    this.clearSearchBtn.addEventListener('click', () => {
+      this.clearSearch();
     });
   }
 
@@ -92,6 +102,7 @@ class TabSearcher {
   filterTabs() {
     const rawQuery = this.searchInput.value.trim();
     const exact = this.exactMatch;
+    this.saveSearchQuery(this.searchInput.value);
 
     console.log('=== filterTabs DEBUG ===');
     console.log('rawQuery:', rawQuery);
@@ -417,6 +428,39 @@ class TabSearcher {
         <div>${message}</div>
       </div>
     `;
+  }
+
+  toggleClearBtn() {
+    this.clearSearchBtn.style.display = this.searchInput.value.length > 0 ? 'flex' : 'none';
+  }
+
+  clearSearch() {
+    this.searchInput.value = '';
+    this.clearSearchBtn.style.display = 'none';
+    this.saveSearchQuery('');
+    this.filterTabs();
+    this.searchInput.focus();
+  }
+
+  saveSearchQuery(value) {
+    try {
+      chrome.storage.session.set({ searchQuery: value });
+    } catch (e) {
+      console.warn('Storage session unavailable (saveSearchQuery):', e);
+    }
+  }
+
+  async restoreSearchQuery() {
+    try {
+      const result = await chrome.storage.session.get('searchQuery');
+      if (result.searchQuery) {
+        this.searchInput.value = result.searchQuery;
+        this.toggleClearBtn();
+        this.filterTabs();
+      }
+    } catch (e) {
+      console.warn('Storage session unavailable (restoreSearchQuery):', e);
+    }
   }
 }
 

@@ -86,6 +86,7 @@ describe('TabSearcher Coverage Tests', () => {
     tabSearcher.loadingEl = createMockElement();
     tabSearcher.refreshBtn = createMockElement();
     tabSearcher.closeOthersBtn = createMockElement();
+    tabSearcher.clearSearchBtn = createMockElement();
 
     // Mock Chrome API
     mockChrome = {
@@ -97,6 +98,12 @@ describe('TabSearcher Coverage Tests', () => {
       },
       windows: {
         update: vi.fn()
+      },
+      storage: {
+        session: {
+          set: vi.fn().mockResolvedValue(undefined),
+          get: vi.fn().mockResolvedValue({})
+        }
       }
     };
     global.chrome = mockChrome;
@@ -666,6 +673,83 @@ describe('TabSearcher Coverage Tests', () => {
 
       expect(() => tabSearcher.filterTabs()).not.toThrow();
       expect(() => tabSearcher.renderTabs()).not.toThrow();
+    });
+  });
+
+  describe('init method', () => {
+    it('should acquire clearSearchBtn from DOM and call restoreSearchQuery', async () => {
+      const mockElement = createMockElement();
+      vi.spyOn(document, 'getElementById').mockReturnValue(mockElement);
+      mockChrome.tabs.query.mockResolvedValue([]);
+
+      const searcher = new TabSearcher();
+      await searcher.init();
+
+      expect(searcher.clearSearchBtn).toBe(mockElement);
+      expect(mockChrome.storage.session.get).toHaveBeenCalledWith('searchQuery');
+    });
+
+    it('should restore saved search query on init', async () => {
+      const mockElement = createMockElement();
+      vi.spyOn(document, 'getElementById').mockReturnValue(mockElement);
+      mockChrome.tabs.query.mockResolvedValue([]);
+      mockChrome.storage.session.get.mockResolvedValueOnce({ searchQuery: 'restored' });
+
+      const searcher = new TabSearcher();
+      await searcher.init();
+
+      expect(searcher.searchInput.value).toBe('restored');
+    });
+  });
+
+  describe('setupEventListeners method', () => {
+    beforeEach(() => {
+      tabSearcher.exactMatchBtn = {
+        ...createMockElement(),
+        setAttribute: vi.fn(),
+        getAttribute: vi.fn().mockReturnValue('false'),
+        classList: {
+          contains: vi.fn(),
+          add: vi.fn(),
+          remove: vi.fn(),
+          toggle: vi.fn()
+        }
+      };
+      tabSearcher.tabs = createMockTabs(3);
+    });
+
+    it('should call toggleClearBtn when input event fires', () => {
+      tabSearcher.setupEventListeners();
+
+      const inputCall = tabSearcher.searchInput.addEventListener.mock.calls.find(
+        ([event]) => event === 'input'
+      );
+      tabSearcher.searchInput.value = 'test';
+      inputCall[1]();
+
+      expect(tabSearcher.clearSearchBtn.style.display).toBe('flex');
+    });
+
+    it('should register a click listener on clearSearchBtn', () => {
+      tabSearcher.setupEventListeners();
+
+      const clickCall = tabSearcher.clearSearchBtn.addEventListener.mock.calls.find(
+        ([event]) => event === 'click'
+      );
+      expect(clickCall).toBeDefined();
+    });
+
+    it('should invoke clearSearch when clear button click fires', () => {
+      tabSearcher.setupEventListeners();
+
+      const clickCall = tabSearcher.clearSearchBtn.addEventListener.mock.calls.find(
+        ([event]) => event === 'click'
+      );
+      tabSearcher.searchInput.value = 'test';
+      clickCall[1]();
+
+      expect(tabSearcher.searchInput.value).toBe('');
+      expect(tabSearcher.clearSearchBtn.style.display).toBe('none');
     });
   });
 });
