@@ -3,7 +3,7 @@
  * Tests core functionality like filtering, escaping, and utility methods
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { TabSearcher } from '../../popup.js';
 
 /**
@@ -52,7 +52,7 @@ describe('TabSearcher Unit Tests', () => {
     tabSearcher = new TabSearcher();
 
     // Mock DOM elements that TabSearcher expects
-    tabSearcher.searchInput = { value: '' };
+    tabSearcher.searchInput = { value: '', focus: vi.fn() };
     tabSearcher.tabsList = {
       innerHTML: '',
       style: { display: 'block' },
@@ -62,6 +62,7 @@ describe('TabSearcher Unit Tests', () => {
     tabSearcher.matchCountEl = { textContent: '', style: { display: 'none' } };
     tabSearcher.noResultsEl = { style: { display: 'none' } };
     tabSearcher.loadingEl = { style: { display: 'none' } };
+    tabSearcher.clearSearchBtn = { style: { display: 'none' } };
     tabSearcher.refreshBtn = {
       addEventListener: () => {
         /* mock - intentionally empty */
@@ -389,6 +390,111 @@ describe('TabSearcher Unit Tests', () => {
 
       // Should NOT contain actual script tag
       expect(highlighted).not.toContain('<script>');
+    });
+  });
+
+  describe('Search Persistence', () => {
+    beforeEach(() => {
+      tabSearcher.tabs = createMockTabs(3);
+      tabSearcher.filteredTabs = [...tabSearcher.tabs];
+      tabSearcher.searchInput = { value: '', focus: vi.fn() };
+      tabSearcher.clearSearchBtn = { style: { display: 'none' } };
+    });
+
+    describe('toggleClearBtn', () => {
+      it('should show the button when input has a value', () => {
+        tabSearcher.searchInput.value = 'git';
+        tabSearcher.toggleClearBtn();
+        expect(tabSearcher.clearSearchBtn.style.display).toBe('flex');
+      });
+
+      it('should hide the button when input is empty', () => {
+        tabSearcher.clearSearchBtn.style.display = 'flex';
+        tabSearcher.searchInput.value = '';
+        tabSearcher.toggleClearBtn();
+        expect(tabSearcher.clearSearchBtn.style.display).toBe('none');
+      });
+    });
+
+    describe('clearSearch', () => {
+      it('should reset input value to empty string', () => {
+        tabSearcher.searchInput.value = 'github';
+        tabSearcher.clearSearch();
+        expect(tabSearcher.searchInput.value).toBe('');
+      });
+
+      it('should hide the clear button', () => {
+        tabSearcher.clearSearchBtn.style.display = 'flex';
+        tabSearcher.clearSearch();
+        expect(tabSearcher.clearSearchBtn.style.display).toBe('none');
+      });
+
+      it('should persist empty string to session storage', () => {
+        tabSearcher.clearSearch();
+        expect(global.chrome.storage.session.set).toHaveBeenCalledWith({ searchQuery: '' });
+      });
+
+      it('should restore all tabs after clearing', () => {
+        tabSearcher.searchInput.value = 'github';
+        tabSearcher.filterTabs();
+        tabSearcher.clearSearch();
+        expect(tabSearcher.filteredTabs).toHaveLength(3);
+      });
+
+      it('should focus the search input after clearing', () => {
+        tabSearcher.clearSearch();
+        expect(tabSearcher.searchInput.focus).toHaveBeenCalled();
+      });
+    });
+
+    describe('saveSearchQuery', () => {
+      it('should save the query to session storage', () => {
+        tabSearcher.saveSearchQuery('github');
+        expect(global.chrome.storage.session.set).toHaveBeenCalledWith({ searchQuery: 'github' });
+      });
+
+      it('should save an empty string to clear the persisted query', () => {
+        tabSearcher.saveSearchQuery('');
+        expect(global.chrome.storage.session.set).toHaveBeenCalledWith({ searchQuery: '' });
+      });
+
+      it('should handle storage errors gracefully', () => {
+        global.chrome.storage.session.set.mockImplementationOnce(() => {
+          throw new Error('Storage unavailable');
+        });
+        expect(() => tabSearcher.saveSearchQuery('test')).not.toThrow();
+      });
+    });
+
+    describe('restoreSearchQuery', () => {
+      it('should restore the saved query and show clear button', async () => {
+        global.chrome.storage.session.get.mockResolvedValueOnce({ searchQuery: 'github' });
+        await tabSearcher.restoreSearchQuery();
+        expect(tabSearcher.searchInput.value).toBe('github');
+        expect(tabSearcher.clearSearchBtn.style.display).toBe('flex');
+      });
+
+      it('should filter tabs using the restored query', async () => {
+        tabSearcher.tabs = [
+          createMockTab({ id: 1, title: 'GitHub', url: 'https://github.com' }),
+          createMockTab({ id: 2, title: 'Google', url: 'https://google.com' })
+        ];
+        global.chrome.storage.session.get.mockResolvedValueOnce({ searchQuery: 'github' });
+        await tabSearcher.restoreSearchQuery();
+        expect(tabSearcher.filteredTabs).toHaveLength(1);
+        expect(tabSearcher.filteredTabs[0].title).toBe('GitHub');
+      });
+
+      it('should not change the input when storage is empty', async () => {
+        global.chrome.storage.session.get.mockResolvedValueOnce({});
+        await tabSearcher.restoreSearchQuery();
+        expect(tabSearcher.searchInput.value).toBe('');
+      });
+
+      it('should handle storage errors gracefully', async () => {
+        global.chrome.storage.session.get.mockRejectedValueOnce(new Error('Storage unavailable'));
+        await expect(tabSearcher.restoreSearchQuery()).resolves.not.toThrow();
+      });
     });
   });
 });
