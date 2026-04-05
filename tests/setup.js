@@ -183,8 +183,10 @@ beforeEach(() => {
   global.chrome.tabs.update.mockResolvedValue({});
   global.chrome.tabs.remove.mockResolvedValue({});
   global.chrome.windows.update.mockResolvedValue({});
-  global.chrome.storage.session.set.mockResolvedValue(undefined);
-  global.chrome.storage.session.get.mockResolvedValue({});
+  if (global.chrome.storage?.session) {
+    global.chrome.storage.session.set.mockResolvedValue(undefined);
+    global.chrome.storage.session.get.mockResolvedValue({});
+  }
 
   // Ensure runtime object exists before setting lastError
   if (global.chrome.runtime) {

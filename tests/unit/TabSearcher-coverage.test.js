@@ -86,6 +86,7 @@ describe('TabSearcher Coverage Tests', () => {
     tabSearcher.loadingEl = createMockElement();
     tabSearcher.refreshBtn = createMockElement();
     tabSearcher.closeOthersBtn = createMockElement();
+    tabSearcher.clearSearchBtn = createMockElement();
 
     // Mock Chrome API
     mockChrome = {
@@ -97,6 +98,12 @@ describe('TabSearcher Coverage Tests', () => {
       },
       windows: {
         update: vi.fn()
+      },
+      storage: {
+        session: {
+          set: vi.fn().mockResolvedValue(undefined),
+          get: vi.fn().mockResolvedValue({})
+        }
       }
     };
     global.chrome = mockChrome;
