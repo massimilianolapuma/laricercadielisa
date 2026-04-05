@@ -1,0 +1,156 @@
+# ---------------------------------------------------------------------------
+# Release — Direct Tag
+#
+# Tagging automatico post-merge su 'main' senza Release PR intermedia.
+# Attivo per default: si attiva quando vars.RELEASE_MODE non è impostata
+# o ha un valore diverso da 'release-please'.
+#
+# Flusso:
+#   1. detect      — Calcola bump SemVer dai commit (strips [TICKET] prefix)
+#   2. tag-check   — Verifica che HEAD non sia già taggato (guard anti-loop)
+#   3. create-tag  — Crea tag annotato vX.Y.Z + push via GitHub App token
+#   → Triggera automaticamente: rel-release.yml (GitHub Release)
+#
+# Trigger:
+#   workflow_run su "CI — Main Branch Gate*" (completed, branches: main)
+#   Il pattern wildcard evita l'interpretazione glob di [container] nel nome workflow.
+#   Il workflow parte solo a CI verde — nessun polling attivo.
+#   workflow_dispatch consente run manuali senza CI previa (hotfix / retry).
+#
+# Mutua esclusione: concurrency group 'semver-release-${{ github.ref }}'
+#   condiviso con rel-release-please.yml — impossibile il doppio-tag tra
+#   i due scenari anche se entrambi i workflow sono presenti nel repo.
+#
+# Security:
+#   - 'contents: write'   — richiesto per creare e pushare il tag
+#   - GitHub App token (scadenza 1h) — stessi secrets di rel-release-please.yml
+#     RELEASE_PLEASE_APP_ID + RELEASE_PLEASE_APP_PRIVATE_KEY
+#   - [template-injection] variabili da env/context mappate a env vars prima
+#     dell'uso in run: steps (mai interpolazione inline ${{ }} in script shell)
+# ---------------------------------------------------------------------------
+
+name: Release — Direct Tag
+
+on:
+    push:
+        branches: [main]
+    workflow_dispatch: {}
+
+concurrency:
+    group: semver-release-${{ github.ref }}
+    cancel-in-progress: false
+
+permissions:
+    actions: read
+
+jobs:
+    # --------------------------------------------------------------------------
+    # Job 1: rileva il tipo di bump SemVer leggendo i commit dall'ultimo tag.
+    # Salta se RELEASE_MODE è impostata esplicitamente a 'release-please'.
+    detect:
+        name: Detect SemVer bump
+        uses: ./.github/workflows/rw-detect-semver-bump.yml
+
+    # --------------------------------------------------------------------------
+    # Job 2: verifica che HEAD non sia già taggato con un tag SemVer.
+    # Previene loop se il workflow venisse ritriggerato sul commit di bump.
+    # Salta se bump-type è 'none' (nessun commit release-worthy).
+    tag-check:
+        name: Guard — check HEAD not already tagged
+        needs: detect
+        if: >-
+            needs.detect.outputs.bump-type != 'none'
+        runs-on: ubuntu-latest
+        timeout-minutes: 5
+
+        outputs:
+            already_tagged: ${{ steps.tag-check.outputs.already_tagged }}
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+              with:
+                  # workflow_run context: usa il SHA del commit che ha triggerato CI,
+                  # non il HEAD corrente del default branch.
+                  # Fallback a github.sha per workflow_dispatch.
+                  ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+                  fetch-depth: 0
+                  fetch-tags: true
+
+            - name: Check if HEAD is already tagged
+              id: tag-check
+              run: |
+                  EXISTING=$(git tag --points-at HEAD | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -1)
+                  if [ -n "$EXISTING" ]; then
+                    echo "HEAD già taggato come $EXISTING — skip."
+                    echo "already_tagged=true" >> "$GITHUB_OUTPUT"
+                  else
+                    echo "already_tagged=false" >> "$GITHUB_OUTPUT"
+                  fi
+
+    # --------------------------------------------------------------------------
+    # Job 3: crea il tag annotato vX.Y.Z e lo pusha usando il GitHub App token.
+    # Il tag triggera automaticamente rel-release.yml e tag-harbor.yml.
+    create-tag:
+        name: Create & push tag v${{ needs.detect.outputs.release-as }}
+        needs: [detect, tag-check]
+        permissions:
+            contents: write
+        if: >-
+            vars.RELEASE_MODE != 'release-please' &&
+            needs.detect.outputs.bump-type != 'none' &&
+            needs.tag-check.outputs.already_tagged == 'false'
+        runs-on: ubuntu-latest
+        timeout-minutes: 10
+
+        steps:
+            # ------------------------------------------------------------------
+            # Genera un token di installazione dall'App GitHub installata sull'org.
+            # Stessi secrets di rel-release-please.yml:
+            #   RELEASE_PLEASE_APP_ID         — App ID numerico
+            #   RELEASE_PLEASE_APP_PRIVATE_KEY — contenuto .pem (chiave privata)
+            # Il token scade automaticamente dopo 1 ora.
+            # - name: Generate GitHub App token
+            #   id: app-token
+            #   uses: actions/create-github-app-token@f8d387b68d61c58ab83c6c016672934102569859 # v3.0.0
+            #   env:
+            #       # v3.0.0 richiede NODE_USE_ENV_PROXY=1 sui runner self-hosted con proxy.
+            #       NODE_USE_ENV_PROXY: "1"
+            #   with:
+            #       app-id: ${{ secrets.RELEASE_PLEASE_APP_ID }}
+            #       private-key: ${{ secrets.RELEASE_PLEASE_APP_PRIVATE_KEY }}
+
+            - name: Checkout
+              uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+              with:
+                  # workflow_run context: usa il SHA del commit che ha triggerato CI.
+                  # Fallback a github.sha per workflow_dispatch.
+                  ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+                  fetch-depth: 0
+                  fetch-tags: true
+                  # Usa il token App per il remote git: evita che checkout inietti
+                  # l'extraheader GITHUB_TOKEN che sopprimerebbe l'evento push dei
+                  # workflow downstream (rel-release.yml, tag-harbor.yml).
+                  # Fallback a github.token in modalità ACT (app-token step saltato).
+                  #token: ${{ steps.app-token.outputs.token || github.token }}
+                  token: ${{ github.token }}
+
+            - name: Configure git identity
+              run: |
+                  git config user.name "github-actions[bot]"
+                  git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+            # ------------------------------------------------------------------
+            # Crea il tag annotato e lo pusha usando il token dell'App GitHub.
+            # [template-injection] INPUT_VERSION e GH_TOKEN sono mappati a env
+            # vars prima dell'interpolazione nello script shell.
+            - name: Create and push SemVer tag
+              env:
+                  INPUT_VERSION: ${{ needs.detect.outputs.release-as }}
+                  GH_TOKEN: ${{ github.token }}
+              run: |
+                  TAG="v${INPUT_VERSION}"
+                  echo "Creazione tag ${TAG} su $(git rev-parse --short HEAD)"
+                  git tag -a "${TAG}" -m "release: ${TAG}"
+                  git push "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git" "${TAG}"
+                  echo "Tag ${TAG} creato e pushato — triggera rel-release.yml"

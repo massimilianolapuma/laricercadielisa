@@ -1,0 +1,108 @@
+# ---------------------------------------------------------------------------
+# Release — GitHub Release from SemVer tag
+#
+# Triggered when release-please (or a manual tag) pushes an immutable
+# vMAJOR.MINOR.PATCH tag to 'main'. Creates a GitHub Release with:
+#   - Auto-generated release notes (from PR titles / Conventional Commits)
+#   - Extracted CHANGELOG section for the tagged version
+#   - Artifacts: compressed source archive (optional — uncomment if needed)
+#
+# Gate:
+#   Prima di creare la release, ci-gate verifica che CI — Main Branch Gate
+#   abbia completato con successo sul SHA taggato (max 15 min di attesa).
+#
+# Tag convention: v<MAJOR>.<MINOR>.<PATCH>  (e.g. v1.4.0)
+# Tags are immutable — never force-push or delete a published tag.
+#
+# Security:
+#   - 'contents: write' — required to create GitHub Releases
+#   - 'actions: read' — required to query workflow runs via REST API
+#   - No Docker push or Harbor interaction in this workflow
+#   - No secrets beyond GITHUB_TOKEN required
+# ---------------------------------------------------------------------------
+
+name: Release — GitHub Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  actions: read
+
+jobs:
+  github-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      # -----------------------------------------------------------------------
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+
+      # -----------------------------------------------------------------------
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Build extension
+        run: npm run build
+
+      - name: Create zip package
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          cd dist
+          zip -r "../tab-search-${VERSION}.zip" .
+          echo "ZIP_NAME=tab-search-${VERSION}.zip" >> "$GITHUB_ENV"
+
+      # -----------------------------------------------------------------------
+      # Extract the CHANGELOG section for the current tag version.
+      # The block between the current version heading and the next one
+      # is extracted and stored in RELEASE_BODY for the release step.
+      - name: Extract CHANGELOG section
+        id: changelog
+        shell: bash
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          VERSION="${TAG#v}"
+
+          # Extract the block starting at "## [VERSION]" up to (but not including) the next "## ["
+          BODY=$(awk "/^## \[${VERSION}\]/{found=1; next} found && /^## \[/{exit} found{print}" CHANGELOG.md)
+
+          if [ -z "$BODY" ]; then
+            BODY="See [CHANGELOG.md](CHANGELOG.md) for details."
+          fi
+
+          # Write to a temp file to avoid shell quoting issues with multi-line strings
+          echo "$BODY" > /tmp/release_body.md
+          echo "body_path=/tmp/release_body.md" >> "$GITHUB_OUTPUT"
+
+      # -----------------------------------------------------------------------
+      # Create the GitHub Release. 'generate_release_notes: true' appends the
+      # auto-generated PR-based notes below the CHANGELOG excerpt.
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@153bb8e04406b158c6c84fc1615b65b24149a1fe # v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
+          body_path: ${{ steps.changelog.outputs.body_path }}
+          generate_release_notes: true
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-rc.') }}
+          files: ${{ env.ZIP_NAME }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
