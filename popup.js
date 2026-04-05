@@ -445,7 +445,7 @@ class TabSearcher {
   saveSearchQuery(value) {
     try {
       chrome.storage.session.set({ searchQuery: value });
-    } catch (e) {
+    } catch (_e) {
       // storage not available (e.g. in test environment)
     }
   }
@@ -458,7 +458,7 @@ class TabSearcher {
         this.toggleClearBtn();
         this.filterTabs();
       }
-    } catch (e) {
+    } catch (_e) {
       // storage not available (e.g. in test environment)
     }
   }
