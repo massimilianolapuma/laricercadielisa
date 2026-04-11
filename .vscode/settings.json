@@ -1,6 +1,46 @@
 {
-    "sonarlint.connectedMode.project": {
-        "connectionId": "massimilianolapuma",
-        "projectKey": "massimilianolapuma_laricercadielisa"
+  "editor.tabSize": 2,
+  "editor.insertSpaces": true,
+  "editor.detectIndentation": false,
+  "editor.formatOnSave": false,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+  "eslint.validate": ["javascript"],
+  "eslint.useFlatConfig": false,
+
+  "github.copilot.chat.codeGeneration.instructions": [
+    {
+      "file": ".github/copilot-instructions.md"
+    },
+    {
+      "file": ".github/copilot/instructions/issue-lifecycle.instructions.md"
     }
+  ],
+
+  "github.copilot.chat.commitMessageGeneration.instructions": [
+    {
+      "text": "Genera SEMPRE commit message in formato Conventional Commits. Usa uno di questi prefissi: feat: (nuova funzionalit\u00e0, bump minor), fix: (bug fix, bump patch), perf: (performance, bump patch), feat!: o BREAKING CHANGE nel footer (breaking, bump major), test: (solo test, nessun bump), ci: (CI/CD, nessun bump), docs: (documentazione, nessun bump), chore: (manutenzione, nessun bump), refactor: (refactoring, nessun bump), style: (formattazione, nessun bump), chore(deps): (dipendenze, bump patch). Il subject deve essere in italiano o inglese, imperativo, senza punto finale, max 72 caratteri. Se la modifica riguarda una funzionalit\u00e0 visibile all'utente usa feat:, se corregge un bug usa fix:. Non usare mai un commit senza prefisso."
+    }
+  ],
+
+  "github.copilot.chat.pullRequestDescriptionGeneration.instructions": [
+    {
+      "text": "Genera la descrizione della PR in italiano. Includi: 1) cosa cambia e perch\u00e9, 2) tipo di bump di versione che verr\u00e0 generato (major/minor/patch/nessuno) basato sui prefissi dei commit, 3) checklist: test aggiunti, coverage >= 80% sul nuovo codice, lint pulito, contrasto WCAG AA rispettato se modificato popup.css."
+    }
+  ],
+
+  "github.copilot.chat.testGeneration.instructions": [
+    {
+      "text": "Genera test con Vitest. Per i metodi di TabSearcher: 1) crea l'istanza con `new TabSearcher()`, 2) mocka gli elementi DOM come oggetti semplici `{ value: '', focus: vi.fn(), style: { display: '' }, addEventListener: vi.fn() }`, 3) mocka `chrome.storage.session` con `global.chrome.storage.session.{set,get}.mockResolvedValue(...)`, 4) per testare callback di addEventListener: cattura con `.mock.calls.find(([e]) => e === 'eventName')[1]()` e invocala direttamente, 5) ogni metodo deve avere test del happy path, caso vuoto/errore, e tutti i branch if/else, 6) la coverage sul nuovo codice deve essere >= 80%."
+    }
+  ],
+
+  "files.associations": {
+    "*.cjs": "javascript"
+  },
+
+  "[javascript]": {
+    "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+  }
 }
