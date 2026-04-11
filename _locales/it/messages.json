@@ -20,5 +20,6 @@
   "tab_singular":           { "message": "scheda" },
   "tab_plural":             { "message": "schede" },
   "match_singular":         { "message": "risultato" },
-  "match_plural":           { "message": "risultati" }
+  "match_plural":           { "message": "risultati" },
+  "toggleLanguage":         { "message": "Cambia lingua", "description": "Tooltip per il pulsante di cambio lingua" }
 }
