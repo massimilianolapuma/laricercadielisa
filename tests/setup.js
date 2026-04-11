@@ -75,7 +75,7 @@ global.chrome = {
       tab_singular: 'tab',
       tab_plural: 'tabs',
       match_singular: 'match',
-      match_plural: 'matches',
+      match_plural: 'matches'
     }[key] || ''))
   }
 };

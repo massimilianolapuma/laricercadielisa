@@ -112,7 +112,7 @@ describe('TabSearcher Coverage Tests', () => {
           untitled: 'Untitled', closeTab: 'Close tab',
           failedToLoadTabs: 'Failed to load tabs',
           closeOtherTabsConfirm: 'Close all other tabs? This action cannot be undone.',
-          appName: 'Tab Search',
+          appName: 'Tab Search'
         }[key] || key))
       }
     };
