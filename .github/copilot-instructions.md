@@ -1,431 +1,188 @@
-# GitHub Copilot Instructions for Tab Search Chrome Extension
+# GitHub Copilot Instructions — Tab Search
 
-## Environment Configuration
+Questo file descrive il contesto, le convenzioni e le regole del progetto
+per guidare GitHub Copilot in modo coerente con il codebase esistente.
 
-### Terminal & Build Environment
+---
 
-- **Operating System**: macOS with zsh shell
-- **Terminal Commands**:
-  - DO NOT use `timeout` command (not available in macOS by default)
-  - Use standard Unix commands or `gtimeout` if timeout functionality is needed
-  - Before working on the background output always wait for build and test completion - they typically take 10-30 seconds
-  - Do not interrupt or timeout test runs prematurely
+## Panoramica del progetto
 
-### Testing & Build Guidelines
+**Tab Search** è un'estensione Chrome (Manifest V3) che permette di cercare
+tra tutti i tab aperti nel browser. L'interfaccia è una popup con un campo
+di ricerca, un pulsante "exact match" e un pulsante per cancellare la ricerca.
 
-- **Test Execution**: Always allow tests to complete fully before proceeding
-- **Build Process**: Wait for compilation and bundling to finish completely
-- **Coverage Reports**: Allow time for coverage generation (can take several seconds)
-- **Performance**: Tests may take longer with large tab datasets or complex scenarios
+- **Linguaggio**: JavaScript ES2022, ES Modules (`type: "module"` in package.json)
+- **Test**: Vitest + jsdom
+- **Linting**: ESLint (regole strict, vedi `.eslintrc.cjs`)
+- **CI/CD**: GitHub Actions (SonarCloud, CodeQL, release automatico)
+- **Nessun framework**: vanilla JS, nessun bundler in runtime
 
-## Project Overview
+---
 
-This is a Chrome Extension called "Tab Search" (internal name: laricercadielisa) that allows users to search through all opened browser tabs quickly and efficiently. The extension provides a modern, intuitive interface for tab management with real-time search capabilities.
+## Architettura
 
-## Project Structure
-
-This is the project structure, updated every time new files are added.
+Tutto il codice funzionale è in `popup.js`, organizzato come **singola classe**:
 
 ```
-laricercadielisa/
-├── manifest.json          # Chrome extension manifest (v3)
-├── popup.html             # Main popup interface
-├── popup.css              # Styling for the popup
-├── popup.js               # Main functionality and tab management
-├── icons/
-│   └── icon16.svg         # Extension icon
-├── README.md              # Project documentation
-├── .github/               # GitHub configuration
-│   ├── copilot-instructions.md  # GitHub Copilot instructions
-│   └── feature.prompt     # Feature development prompt
-└── LICENSE                # Project license
+class TabSearcher
+  ├── init()                    ← entry point, chiamato all'avvio
+  ├── setupEventListeners()     ← registra tutti gli event listener
+  ├── loadTabs()                ← carica i tab via chrome.tabs.query
+  ├── filterTabs()              ← filtra + salva query in storage
+  ├── renderTabs()              ← genera l'HTML dei tab filtrati
+  ├── updateUI() / updateStats()
+  ├── switchToTab(id)
+  ├── closeTab(id)
+  ├── closeOtherTabs()
+  ├── toggleClearBtn()          ← mostra/nasconde il bottone X
+  ├── clearSearch()             ← svuota campo + storage + focus
+  ├── saveSearchQuery(value)    ← persiste in chrome.storage.session
+  ├── restoreSearchQuery()      ← ripristina la query alla riapertura
+  ├── escapeHtml(str)
+  ├── highlightText(text, query)
+  ├── formatUrl(url)
+  ├── createTabHTML(tab, query)
+  ├── showNoResults(bool)
+  ├── showLoading(bool)
+  └── showError(message)
 ```
 
-## Technology Stack & Conventions
+---
 
-### Core Technologies
+## Regole di codice
 
-- **Chrome Extension Manifest V3** - Modern extension API
-- **Vanilla JavaScript** - No frameworks, ES6+ features
-- **Modern CSS** - Flexbox, Grid, CSS Variables, Gradients
-- **HTML5** - Semantic markup
+### JavaScript
 
-### Code Style & Conventions
+- **Sempre `const`**, mai `let` se il valore non cambia, mai `var`
+- **Arrow functions** per callback: `() => {}`, non `function() {}`
+- **Template literals** per stringhe con variabili: `` `ciao ${nome}` ``
+- **`===`** sempre, mai `==`
+- **Single quotes** `'` per le stringhe
+- **2 spazi** di indentazione
+- **Punto e virgola** obbligatorio
+- **`async/await`** per le chiamate asincrone, non `.then().catch()`
+- Variabili inutilizzate vietate. Se un parametro è intenzionalmente ignorato, prefix `_`
+- Nei `catch` block: gestisci sempre l'errore (es. `console.warn(...)`) —
+  i catch vuoti o con solo un commento vengono rifiutati da SonarCloud
 
-#### JavaScript
+### CSS
 
-- Use ES6+ features (async/await, arrow functions, destructuring)
-- Class-based architecture for main components
-- Async/await for Chrome API calls
-- Error handling with try/catch blocks
-- Use `const` and `let`, avoid `var`
-- Descriptive variable and function names
-- JSDoc comments for complex functions
+- Contrasto minimo **4.5:1** (WCAG AA) per tutto il testo normale
+- Contrasto minimo **3:1** per componenti UI non-testo
+- Non usare `#667eea` come background con testo bianco (contrasto 3.66:1, non sufficiente)
+  → usa `#4854c8` (6.22:1)
+- Testo grigio secondario: usa `#4a5568` (7.53:1 su bianco, 5.94:1 su #e1e5e9)
+- Il `color` applicato ad un elemento di testo non può essere `#6c757d` su sfondo
+  chiaro come `#e1e5e9` (3.70:1 — non sufficiente per testo < 18px)
 
-#### CSS
+### HTML
 
-- Modern CSS features (Grid, Flexbox, CSS Variables)
-- BEM-like naming convention for classes
-- Mobile-first responsive design
-- Use of CSS custom properties for theming
-- Smooth transitions and animations
-- Consistent spacing using rem/em units
+- Usa HTML semantico: `<button>` per azioni, `<input>` per input
+- Ogni `<button>` interattivo deve avere testo accessibile (testo visibile
+  o `aria-label`)
+- Mantieni `class="sr-only"` per contenuto solo-screen-reader
 
-#### HTML
+---
 
-- Semantic HTML5 elements
-- Proper accessibility attributes (ARIA labels, roles)
-- Data attributes for JavaScript hooks
-- Clean, readable structure
+## Pattern di test
 
-### Chrome Extension Specific Guidelines
+### Setup mock DOM
 
-#### Manifest V3 Best Practices
-
-- Use minimal permissions required
-- Prefer `activeTab` over broad `tabs` permission when possible
-- Use service workers instead of background pages
-- Follow Chrome Web Store policies
-
-#### Security
-
-- Content Security Policy compliance
-- No inline scripts or styles
-- Sanitize user inputs
-- Escape HTML content properly
-
-#### Performance
-
-- Lazy load content when possible
-- Debounce search inputs
-- Minimize DOM manipulations
-- Use efficient event handling
-
-## Feature Implementation Guidelines
-
-### Tab Search Functionality
-
-- Real-time search as user types
-- Search both tab titles and URLs
-- Case-insensitive matching
-- Highlight matching terms in results
-- Support for keyboard navigation
-
-### UI/UX Patterns
-
-- Modern, clean design with gradients
-- Consistent color scheme (#667eea primary)
-- Smooth animations and transitions
-- Loading states and error handling
-- Responsive design for different screen sizes
-
-### Tab Management Features
-
-- Switch to tab on click
-- Close individual tabs
-- Close all other tabs (with confirmation)
-- Visual indication of active tab
-- Tab favicon display with fallbacks
-
-## Code Examples & Patterns
-
-### Chrome API Usage
-
-```javascript
-// Query tabs
-const tabs = await chrome.tabs.query({});
-
-// Switch to tab
-await chrome.tabs.update(tabId, { active: true });
-await chrome.windows.update(tab.windowId, { focused: true });
-
-// Close tabs
-await chrome.tabs.remove(tabId);
+```js
+// In TabSearcher-coverage.test.js: usa createMockElement()
+tabSearcher.searchInput = createMockElement();
+tabSearcher.clearSearchBtn = createMockElement();
 ```
 
-### Event Handling Pattern
+### Mock Chrome API
 
-```javascript
-setupEventListeners() {
-  this.searchInput.addEventListener('input', () => {
-    this.filterTabs();
-  });
-
-  this.searchInput.addEventListener('keydown', (e) => {
-    this.handleKeyNavigation(e);
-  });
-}
+```js
+// chrome.storage.session è sempre mockato in tests/setup.js
+global.chrome.storage.session.set.mockResolvedValue(undefined);
+global.chrome.storage.session.get.mockResolvedValue({ searchQuery: 'valore' });
 ```
 
-### Error Handling Pattern
+### Testare callback di event listener
 
-```javascript
-async loadTabs() {
-  try {
-    const tabs = await chrome.tabs.query({});
-    // Process tabs...
-  } catch (error) {
-    console.error('Error loading tabs:', error);
-    this.showError('Failed to load tabs');
-  }
-}
+```js
+// NON usare fireEvent o dispatchEvent
+// Cattura la callback da addEventListener.mock.calls
+tabSearcher.setupEventListeners();
+const [, cb] = tabSearcher.searchInput.addEventListener.mock.calls
+  .find(([event]) => event === 'input');
+cb(); // invoca direttamente
 ```
 
-## Quality Assurance & Best Practices
+### Testare metodi asincroni con storage
 
-### Documentation Requirements
-
-Every feature addition MUST include:
-
-#### Code Documentation
-
-- JSDoc comments for all public methods and complex functions
-- Inline comments explaining business logic and Chrome API usage
-- README updates for new user-facing features
-- Architecture decisions documented in comments
-
-```javascript
-/**
- * Filters tabs based on search query with debouncing
- * @param {string} query - Search term to filter by
- * @param {boolean} [caseSensitive=false] - Whether search is case sensitive
- * @returns {Array<Tab>} Filtered array of tab objects
- */
-async filterTabs(query, caseSensitive = false) {
-  // Implementation with proper error handling
-}
+```js
+global.chrome.storage.session.get.mockResolvedValueOnce({ searchQuery: 'test' });
+await tabSearcher.restoreSearchQuery();
+expect(tabSearcher.searchInput.value).toBe('test');
 ```
 
-#### Feature Documentation
+### Coverage minima
 
-- Update README.md with new features and usage instructions
-- Document any new keyboard shortcuts or UI interactions
-- Include screenshots for visual changes
-- Update permissions documentation if new Chrome APIs are used
+SonarCloud richiede ≥ 80% di coverage sul **nuovo codice**.
+Ogni metodo pubblico aggiunto deve avere almeno:
+- Test del happy path
+- Test del caso vuoto/errore
+- Test che eserciti ogni branch `if/else`
 
-### Version Control Best Practices
+---
 
-#### Commit Standards
+## ⚠️ Conventional Commits — Critico per il release automatico
 
-- Use conventional commit format: `feat:`, `fix:`, `docs:`, `style:`, `refactor:`, `test:`
-- Include issue/feature references in commit messages
-- Keep commits atomic and focused on single changes
-- Write descriptive commit messages explaining the "why" not just "what"
+Il workflow `rw-detect-semver-bump.yml` legge i commit dall'ultimo tag
+per determinare il bump di versione. **Usa sempre il prefisso corretto**.
 
-#### Code Review Requirements
+### Prefissi che producono una release
 
-- All features must be reviewed before merging
-- Review checklist includes security, performance, and accessibility
-- Test coverage must be maintained or improved
-- Documentation must be updated for user-facing changes
+| Prefisso | Bump | Esempio |
+|---|---|---|
+| `feat:` o `feat(<scope>):` | **minor** | `feat(popup): add keyboard shortcut` |
+| `fix:` o `fix(<scope>):` | **patch** | `fix(css): correct button contrast ratio` |
+| `perf:` o `perf(<scope>):` | **patch** | `perf(filter): optimize regex caching` |
+| `feat!:` o `BREAKING CHANGE:` nel footer | **major** | `feat!: require Chrome 120+` |
+| `chore(deps):` / `build(deps):` / `chore(ci):` | **patch** | `chore(deps): bump vitest to 4.1.2` |
 
-### Performance Monitoring
+### Prefissi che NON producono release
 
-#### Metrics to Track
+`chore:` `ci:` `docs:` `test:` `style:` `refactor:`
 
-- Popup load time (target: <100ms)
-- Search response time (target: <50ms for 100+ tabs)
-- Memory usage with large tab counts
-- CPU usage during intensive filtering
+### Regola pratica
 
-#### Performance Testing
+> Se stai aggiungendo una funzionalità all'utente → `feat:`
+> Se stai correggendo un bug → `fix:`
+> Se stai solo scrivendo test o refactoring → `test:` / `refactor:`
+> Se stai modificando CI o dipendenze → `ci:` / `chore(deps):`
 
-```javascript
-// Example performance test pattern
-console.time("tab-filter");
-const results = await this.filterTabs(query);
-console.timeEnd("tab-filter");
-console.log(`Filtered ${this.tabs.length} tabs to ${results.length} results`);
+---
+
+## Chrome API disponibili
+
+```js
+chrome.tabs.query({})         // tutti i tab
+chrome.tabs.update(id, {...}) // attiva un tab
+chrome.tabs.remove(id)        // chiude un tab
+chrome.tabs.get(id)           // dettagli di un tab
+chrome.windows.update(id, {focused: true}) // porta in primo piano
+chrome.storage.session.set({ key: value }) // persiste nella sessione
+chrome.storage.session.get('key')          // legge dalla sessione
 ```
 
-### Security & Privacy Guidelines
+Permissions dichiarate in `manifest.json`: `tabs`, `activeTab`, `windows`, `storage`.
 
-#### Data Handling
+---
 
-- Never store sensitive tab information persistently
-- Minimize data retention in memory
-- Clear search history and cached data appropriately
-- Follow principle of least privilege for permissions
+## Cosa evitare
 
-#### Content Security
-
-- All dynamic content must be sanitized
-- No eval() or similar unsafe patterns
-- Validate all Chrome API responses
-- Handle permission errors gracefully
-
-### Release Process
-
-#### Pre-Release Checklist
-
-- [ ] All tests pass (manual and automated)
-- [ ] Performance benchmarks meet targets
-- [ ] Security review completed
-- [ ] Documentation updated
-- [ ] Version number incremented appropriately
-- [ ] Change log updated with new features/fixes
-
-#### Post-Release Monitoring
-
-- Monitor extension performance metrics
-- Track user feedback and error reports
-- Plan hotfixes for critical issues
-- Document lessons learned for future releases
-
-## Development Guidelines
-
-### Feature Development Workflow
-
-#### Before Starting Any Feature
-
-1. **Plan & Document**: Write feature specification with user stories
-2. **Design Review**: Create UI mockups and get feedback
-3. **Test Planning**: Define test scenarios and acceptance criteria
-4. **Security Assessment**: Identify potential security implications
-5. **Performance Impact**: Consider effects on extension performance
-
-#### During Development
-
-1. **Follow TDD**: Write tests before implementing features
-2. **Incremental Commits**: Make small, focused commits with clear messages
-3. **Code Reviews**: Get feedback early and often
-4. **Documentation**: Update docs as you code, not after
-5. **Manual Testing**: Test continuously during development
-
-#### Before Merging
-
-1. **Full Test Suite**: Run all automated and manual tests
-2. **Performance Check**: Verify no performance regressions
-3. **Security Review**: Check for potential vulnerabilities
-4. **Documentation Review**: Ensure all docs are updated
-5. **Accessibility Audit**: Verify keyboard navigation and screen reader support
-
-### When Adding New Features
-
-1. Follow the existing class-based architecture
-2. Add proper error handling and loading states
-3. Include keyboard accessibility
-4. Update the UI to match the existing design system
-5. Test with various numbers of tabs and edge cases
-6. Consider performance implications
-
-### When Modifying Existing Code
-
-1. Maintain backward compatibility
-2. Follow existing naming conventions
-3. Update related documentation
-4. Test thoroughly across different scenarios
-5. Preserve the modern, clean UI aesthetic
-
-### Testing Requirements
-
-Every feature addition MUST include comprehensive testing:
-
-#### Testing Environment Guidelines
-
-- **Wait for Completion**: Always allow tests to complete fully (typically 3-10 seconds)
-- **No Timeouts**: Do not use `timeout` command on macOS - use `gtimeout` if needed
-- **Coverage Generation**: Allow extra time for coverage reports to generate
-- **Test Commands**: Use `npm test` or `npx vitest run --coverage` and wait for completion
-
-#### Manual Testing Checklist
-
-- [ ] Test with 1, 10, 50, and 100+ tabs
-- [ ] Test with tabs having no favicons or broken favicon URLs
-- [ ] Test with very long tab titles and URLs (500+ characters)
-- [ ] Test keyboard navigation (Tab, Arrow keys, Enter, Escape)
-- [ ] Test edge cases (no tabs, network errors, permission denied)
-- [ ] Test across different Chrome versions and window states
-- [ ] Test with pinned tabs, grouped tabs, and incognito windows
-- [ ] Test performance with rapid user interactions
-- [ ] Test accessibility with screen readers
-
-#### Automated Testing
-
-- Write unit tests for core logic functions
-- Create integration tests for Chrome API interactions
-- Test error handling and recovery scenarios
-- Performance benchmarks for search filtering
-- Cross-browser compatibility tests
-
-#### Security Testing
-
-- Validate all user inputs are properly escaped
-- Test CSP compliance
-- Verify no sensitive data leakage
-- Test permission scope limitations
-
-## Common Patterns to Follow
-
-### DOM Manipulation
-
-```javascript
-// Create elements with proper escaping
-createTabHTML(tab) {
-  const escapedTitle = this.escapeHtml(tab.title);
-  return `<div class="tab-item">${escapedTitle}</div>`;
-}
-```
-
-### Search and Filtering
-
-```javascript
-filterTabs() {
-  const query = this.searchInput.value.toLowerCase().trim();
-  this.filteredTabs = this.tabs.filter(tab =>
-    tab.title.toLowerCase().includes(query) ||
-    tab.url.toLowerCase().includes(query)
-  );
-}
-```
-
-### UI State Management
-
-```javascript
-showLoading(show) {
-  this.loadingEl.style.display = show ? 'flex' : 'none';
-  this.tabsList.style.display = show ? 'none' : 'block';
-}
-```
-
-## Extension-Specific Considerations
-
-### Permissions
-
-- Only request necessary permissions
-- Document why each permission is needed
-- Consider user privacy implications
-
-### Performance
-
-- Extension popup should load quickly
-- Minimize memory usage
-- Handle large numbers of tabs efficiently
-
-### User Experience
-
-- Provide clear feedback for all actions
-- Handle edge cases gracefully
-- Maintain consistent behavior across different browser states
-
-## File-Specific Notes
-
-### popup.js
-
-- Main application logic in `TabSearcher` class
-- All Chrome API interactions
-- Event handling and UI updates
-
-### popup.css
-
-- Modern design system
-- Responsive layout
-- Smooth animations and hover effects
-
-### manifest.json
-
-- Minimal required permissions
-- Proper icon and popup configuration
-- Version 3 manifest structure
-
-When working on this project, prioritize user experience, performance, and maintainability. The extension should feel fast, responsive, and integrate seamlessly with the browser experience.
+- Non usare `localStorage` o `sessionStorage`: l'estensione usa
+  `chrome.storage.session` (il browser li blocca nelle popup)
+- Non usare `document.write`, `eval`, `innerHTML` con dati non sanitizzati
+  (usa sempre `escapeHtml()` prima di inserire contenuto utente nell'HTML)
+- Non abbassare i valori di contrasto in `popup.css` sotto WCAG AA
+- Non committare senza prefisso Conventional Commits se vuoi che venga
+  incluso nella release
+- Non modificare manualmente il campo `version` in `manifest.json` o
+  `package.json`: usa `npm run build:patch|minor|major`
