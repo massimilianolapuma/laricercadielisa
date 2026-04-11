@@ -78,6 +78,7 @@ jobs:
           mkdir -p _pkg
           cp manifest.json popup.html popup.js popup.css popup-init.js README.md LICENSE _pkg/
           cp -r icons _pkg/
+          cp -r _locales _pkg/
           cd _pkg
           zip -r "../laricercadielisa-${VERSION}.zip" .
           cd ..
