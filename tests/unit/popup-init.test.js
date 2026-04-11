@@ -36,7 +36,9 @@ describe('popup-init.js Coverage Tests', () => {
       head: {
         appendChild: appendChildSpy
       },
-      createElement: createElementSpy
+      createElement: createElementSpy,
+      querySelectorAll: vi.fn(() => []),
+      title: ''
     };
 
     // Mock TabSearcher constructor as a proper class
@@ -58,10 +60,11 @@ describe('popup-init.js Coverage Tests', () => {
     vi.doUnmock('../../popup.js');
   });
 
-  it('should inject CSS styles on initialization', async () => {
+  it('should inject CSS styles and register DOMContentLoaded when DOM is loading', async () => {
     // Set up mocks before importing
     global.document = mockDocument;
     global.window = mockWindow;
+    mockDocument.readyState = 'loading';
 
     // Mock the TabSearcher import
     vi.doMock('../../popup.js', () => ({
@@ -81,6 +84,85 @@ describe('popup-init.js Coverage Tests', () => {
 
     // Verify style was appended to head
     expect(appendChildSpy).toHaveBeenCalledWith(mockStyle);
+
+    // Verify DOMContentLoaded listener was registered
+    expect(addEventListenerSpy).toHaveBeenCalledWith('DOMContentLoaded', expect.any(Function));
+
+    // Fire the DOMContentLoaded callback to cover the loading branch body
+    const domCallback = addEventListenerSpy.mock.calls.find(([event]) => event === 'DOMContentLoaded')?.[1];
+    domCallback();
+
+    // Verify TabSearcher was instantiated and init called
+    expect(mockWindow.tabSearcher).toBeDefined();
+    expect(mockWindow.tabSearcher.init).toHaveBeenCalled();
+  });
+
+  it('should apply i18n and initialize immediately when DOM is already ready', async () => {
+    const i18nEl = { textContent: '', dataset: { i18n: 'appName' } };
+    const placeholderEl = { placeholder: '', dataset: { i18nPlaceholder: 'searchPlaceholder' } };
+    const titleAttrEl = { title: '', dataset: { i18nTitle: 'defaultTitle' } };
+    const ariaEl = { setAttribute: vi.fn(), dataset: { i18nAriaLabel: 'closeTab' } };
+
+    mockDocument.querySelectorAll = vi.fn(selector => {
+      if (selector === '[data-i18n]') { return [i18nEl]; }
+      if (selector === '[data-i18n-placeholder]') { return [placeholderEl]; }
+      if (selector === '[data-i18n-title]') { return [titleAttrEl]; }
+      if (selector === '[data-i18n-aria-label]') { return [ariaEl]; }
+      return [];
+    });
+    mockDocument.readyState = 'complete';
+    global.document = mockDocument;
+    global.window = mockWindow;
+
+    vi.doMock('../../popup.js', () => ({
+      TabSearcher: TabSearcherMock
+    }));
+
+    await import('../../popup-init.js');
+
+    // applyI18n called all four querySelectorAll selectors
+    expect(mockDocument.querySelectorAll).toHaveBeenCalledWith('[data-i18n]');
+    expect(mockDocument.querySelectorAll).toHaveBeenCalledWith('[data-i18n-placeholder]');
+    expect(mockDocument.querySelectorAll).toHaveBeenCalledWith('[data-i18n-title]');
+    expect(mockDocument.querySelectorAll).toHaveBeenCalledWith('[data-i18n-aria-label]');
+
+    // DOM elements were updated with translated text
+    expect(i18nEl.textContent).toBeTruthy();
+    expect(placeholderEl.placeholder).toBeTruthy();
+    expect(titleAttrEl.title).toBeTruthy();
+    expect(ariaEl.setAttribute).toHaveBeenCalledWith('aria-label', expect.any(String));
+
+    // document.title was set via applyI18n
+    expect(mockDocument.title).toBeTruthy();
+
+    // TabSearcher was instantiated immediately (not via DOMContentLoaded listener)
+    expect(addEventListenerSpy).not.toHaveBeenCalledWith('DOMContentLoaded', expect.any(Function));
+    expect(mockWindow.tabSearcher).toBeDefined();
+    expect(mockWindow.tabSearcher.init).toHaveBeenCalled();
+  });
+
+  it('should fall back to key when i18n message is empty string', async () => {
+    const unknownEl = { textContent: '', dataset: { i18n: 'unknownKey' } };
+
+    mockDocument.querySelectorAll = vi.fn(selector => {
+      if (selector === '[data-i18n]') { return [unknownEl]; }
+      return [];
+    });
+    mockDocument.readyState = 'complete';
+    global.document = mockDocument;
+    global.window = mockWindow;
+
+    // Make getMessage return empty string to trigger the || key fallback
+    global.chrome.i18n.getMessage.mockReturnValue('');
+
+    vi.doMock('../../popup.js', () => ({
+      TabSearcher: TabSearcherMock
+    }));
+
+    await import('../../popup-init.js');
+
+    // The fallback `|| key` means textContent should equal the key
+    expect(unknownEl.textContent).toBe('unknownKey');
   });
 
   it('should test initialization logic directly for DOM loading state', () => {

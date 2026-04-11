@@ -87,7 +87,7 @@ class TabSearcher {
 
       this.tabs = tabs.map(tab => ({
         id: tab.id,
-        title: tab.title || 'Untitled',
+        title: tab.title || chrome.i18n.getMessage('untitled'),
         url: tab.url || '',
         favIconUrl: tab.favIconUrl,
         windowId: tab.windowId,
@@ -99,7 +99,7 @@ class TabSearcher {
       this.updateUI();
     } catch (error) {
       console.error('Error loading tabs:', error);
-      this.showError('Failed to load tabs');
+      this.showError(chrome.i18n.getMessage('failedToLoadTabs'));
     } finally {
       this.showLoading(false);
     }
@@ -188,15 +188,17 @@ class TabSearcher {
   }
 
   updateStats() {
-    this.tabCountEl.textContent = `${this.filteredTabs.length} tab${
-      this.filteredTabs.length !== 1 ? 's' : ''
-    }`;
+    const tabWord = this.filteredTabs.length === 1
+      ? chrome.i18n.getMessage('tab_singular')
+      : chrome.i18n.getMessage('tab_plural');
+    this.tabCountEl.textContent = `${this.filteredTabs.length} ${tabWord}`;
 
     const query = this.searchInput.value.trim();
     if (query && this.filteredTabs.length !== this.tabs.length) {
-      this.matchCountEl.textContent = `${this.filteredTabs.length} match${
-        this.filteredTabs.length !== 1 ? 'es' : ''
-      }`;
+      const matchWord = this.filteredTabs.length === 1
+        ? chrome.i18n.getMessage('match_singular')
+        : chrome.i18n.getMessage('match_plural');
+      this.matchCountEl.textContent = `${this.filteredTabs.length} ${matchWord}`;
       this.matchCountEl.style.display = 'inline';
     } else {
       this.matchCountEl.style.display = 'none';
@@ -250,7 +252,7 @@ class TabSearcher {
     const isActive = tab.id === this.currentTabId;
     const query = this.searchInput.value.toLowerCase().trim();
 
-    const title = tab.title || 'Untitled';
+    const title = tab.title || chrome.i18n.getMessage('untitled');
     const url = tab.url || '';
 
     const highlightedTitle = this.highlightText(title, query);
@@ -268,7 +270,7 @@ class TabSearcher {
           <div class="tab-url">${highlightedUrl}</div>
         </div>
         <div class="tab-actions">
-          <button class="close-tab" title="Close tab">×</button>
+          <button class="close-tab" title="${chrome.i18n.getMessage('closeTab')}">×</button>
         </div>
       </div>
     `;
@@ -351,7 +353,7 @@ class TabSearcher {
 
   async closeOtherTabs() {
     // eslint-disable-next-line no-alert
-    if (!confirm('Close all other tabs? This action cannot be undone.')) {
+    if (!confirm(chrome.i18n.getMessage('closeOtherTabsConfirm'))) {
       return;
     }
 

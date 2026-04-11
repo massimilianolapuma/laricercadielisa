@@ -51,6 +51,32 @@ global.chrome = {
       set: vi.fn().mockResolvedValue(undefined),
       get: vi.fn().mockResolvedValue({})
     }
+  },
+  i18n: {
+    getMessage: vi.fn(key => ({
+      appName: 'Tab Search',
+      appDescription: 'Search through all opened tabs quickly and easily',
+      defaultTitle: 'Search Tabs',
+      searchPlaceholder: 'Search tabs...',
+      clearSearch: 'Clear search',
+      exactMatch: 'Exact Match',
+      toggleExactMatch: 'Toggle exact word match',
+      closeOtherTabs: 'Close Other Tabs',
+      closeAllOtherTabsTitle: 'Close all tabs except current',
+      refresh: 'Refresh',
+      refreshTitle: 'Refresh tab list',
+      toggleTheme: 'Toggle theme',
+      noTabsFound: 'No tabs found matching your search',
+      loadingTabs: 'Loading tabs...',
+      closeTab: 'Close tab',
+      failedToLoadTabs: 'Failed to load tabs',
+      untitled: 'Untitled',
+      closeOtherTabsConfirm: 'Close all other tabs? This action cannot be undone.',
+      tab_singular: 'tab',
+      tab_plural: 'tabs',
+      match_singular: 'match',
+      match_plural: 'matches'
+    }[key] || ''))
   }
 };
 

@@ -10,7 +10,7 @@
     <div class="container">
       <header>
         <h1>Tab Search</h1>
-        <button id="themeBtn" aria-label="Toggle theme">
+        <button id="themeBtn" aria-label="Toggle theme" data-i18n-aria-label="toggleTheme">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <rect width="20" height="14" x="2" y="3" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/>
           </svg>
@@ -25,6 +25,7 @@
           <input
             type="text"
             id="searchInput"
+            data-i18n-placeholder="searchPlaceholder"
             placeholder="Search tabs..."
             autocomplete="off"
             autofocus
@@ -33,21 +34,24 @@
             id="clearSearchBtn"
             aria-label="Clear search"
             title="Clear search"
+            data-i18n-aria-label="clearSearch"
+            data-i18n-title="clearSearch"
             style="display:none"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
             </svg>
-            <span class="sr-only">Clear search</span>
+            <span class="sr-only" data-i18n="clearSearch">Clear search</span>
           </button>
         </div>
         <button
           id="exactMatchBtn"
           aria-pressed="false"
           title="Toggle exact word match"
+          data-i18n-title="toggleExactMatch"
           data-exact-match="false"
         >
-          Exact Match
+          <span data-i18n="exactMatch">Exact Match</span>
         </button>
         <div class="search-stats" style="display:none">
           <span id="tabCount">0 tabs</span>
@@ -61,12 +65,12 @@
         </div>
 
         <div id="noResults" class="no-results" style="display: none">
-          <p>No tabs found matching your search</p>
+          <p data-i18n="noTabsFound">No tabs found matching your search</p>
         </div>
 
         <div id="loading" class="loading">
           <div class="loading-spinner"></div>
-          <p>Loading tabs...</p>
+          <p data-i18n="loadingTabs">Loading tabs...</p>
         </div>
       </div>
 
@@ -74,14 +78,16 @@
         <button
           id="closeOthersBtn"
           title="Close all tabs except current"
+          data-i18n-title="closeAllOtherTabsTitle"
         >
-          Close Other Tabs
+          <span data-i18n="closeOtherTabs">Close Other Tabs</span>
         </button>
         <button
           id="refreshBtn"
           title="Refresh tab list"
+          data-i18n-title="refreshTitle"
         >
-          Refresh
+          <span data-i18n="refresh">Refresh</span>
         </button>
       </footer>
     </div>

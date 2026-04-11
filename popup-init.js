@@ -15,13 +15,24 @@ style.textContent = `
 `;
 document.head.appendChild(style);
 
+const applyI18n = () => {
+  const t = key => chrome.i18n.getMessage(key) || key;
+  document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => { el.placeholder = t(el.dataset.i18nPlaceholder); });
+  document.querySelectorAll('[data-i18n-title]').forEach(el => { el.title = t(el.dataset.i18nTitle); });
+  document.querySelectorAll('[data-i18n-aria-label]').forEach(el => { el.setAttribute('aria-label', t(el.dataset.i18nAriaLabel)); });
+  document.title = t('appName');
+};
+
 // Initialize when DOM is ready
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => {
+    applyI18n();
     window.tabSearcher = new TabSearcher();
     window.tabSearcher.init();
   });
 } else {
+  applyI18n();
   window.tabSearcher = new TabSearcher();
   window.tabSearcher.init();
 }
