@@ -104,6 +104,16 @@ describe('TabSearcher Coverage Tests', () => {
           set: vi.fn().mockResolvedValue(undefined),
           get: vi.fn().mockResolvedValue({})
         }
+      },
+      i18n: {
+        getMessage: vi.fn(key => ({
+          tab_singular: 'tab', tab_plural: 'tabs',
+          match_singular: 'match', match_plural: 'matches',
+          untitled: 'Untitled', closeTab: 'Close tab',
+          failedToLoadTabs: 'Failed to load tabs',
+          closeOtherTabsConfirm: 'Close all other tabs? This action cannot be undone.',
+          appName: 'Tab Search',
+        }[key] || key))
       }
     };
     global.chrome = mockChrome;

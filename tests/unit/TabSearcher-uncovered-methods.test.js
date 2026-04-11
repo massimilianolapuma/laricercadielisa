@@ -76,6 +76,9 @@ describe('TabSearcher Uncovered Methods', () => {
       },
       windows: {
         update: vi.fn(() => Promise.resolve())
+      },
+      i18n: {
+        getMessage: vi.fn(key => key)
       }
     };
 
