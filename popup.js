@@ -7,6 +7,7 @@ class TabSearcher {
   }
 
   async init() {
+    await this.initTheme();
     // Get DOM elements
     this.searchInput = document.getElementById('searchInput');
     this.tabsList = document.getElementById('tabsList');
@@ -18,6 +19,7 @@ class TabSearcher {
     this.closeOthersBtn = document.getElementById('closeOthersBtn');
     this.exactMatchBtn = document.getElementById('exactMatchBtn');
     this.clearSearchBtn = document.getElementById('clearSearchBtn');
+    this.themeBtn = document.getElementById('themeBtn');
 
     // Set up event listeners
     this.setupEventListeners();
@@ -63,6 +65,10 @@ class TabSearcher {
     this.clearSearchBtn.addEventListener('click', () => {
       this.clearSearch();
     });
+
+    if (this.themeBtn) {
+      this.themeBtn.addEventListener('click', () => { this.cycleTheme().catch(err => console.warn('Theme cycle error:', err)); });
+    }
   }
 
   async loadTabs() {
@@ -460,6 +466,61 @@ class TabSearcher {
       }
     } catch (e) {
       console.warn('Storage session unavailable (restoreSearchQuery):', e);
+    }
+  }
+
+  async initTheme() {
+    try {
+      const result = await chrome.storage.session.get('themeMode');
+      const mode = result.themeMode || 'system';
+      await this.applyTheme(mode);
+    } catch (_err) {
+      // Fall back to system preference on storage error
+      await this.applyTheme('system');
+    }
+  }
+
+  async applyTheme(mode) {
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const isDark = mode === 'dark' || (mode === 'system' && prefersDark);
+    const container = document.querySelector('.container');
+    if (container) {
+      container.classList.toggle('dark', isDark);
+    }
+    try {
+      await chrome.storage.session.set({ themeMode: mode });
+    } catch (_err) {
+      console.warn('Failed to save theme mode:', _err);
+    }
+    if (this.themeBtn) {
+      this.themeBtn.setAttribute('aria-label', `Theme: ${mode}`);
+      this.themeBtn.setAttribute('data-theme-mode', mode);
+      const svgEl = this.themeBtn.querySelector('svg');
+      if (svgEl) {
+        svgEl.innerHTML = this.getThemeIcon(mode);
+      }
+    }
+  }
+
+  getThemeIcon(mode) {
+    if (mode === 'light') {
+      return '<circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>';
+    }
+    if (mode === 'dark') {
+      return '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>';
+    }
+    // system (monitor)
+    return '<rect width="20" height="14" x="2" y="3" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/>';
+  }
+
+  async cycleTheme() {
+    try {
+      const result = await chrome.storage.session.get('themeMode');
+      const current = result.themeMode || 'system';
+      const next = current === 'system' ? 'light' : current === 'light' ? 'dark' : 'system';
+      await this.applyTheme(next);
+    } catch (_err) {
+      console.warn('Failed to cycle theme:', _err);
     }
   }
 }

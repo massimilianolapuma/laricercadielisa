@@ -1,54 +1,55 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="system">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Tab Search</title>
     <link rel="stylesheet" href="popup.css" />
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
-      crossorigin="anonymous"
-      referrerpolicy="no-referrer"
-    />
   </head>
   <body>
     <div class="container">
       <header>
-        <h1>🔍 Tab Search</h1>
+        <h1>Tab Search</h1>
+        <button id="themeBtn" aria-label="Toggle theme">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect width="20" height="14" x="2" y="3" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/>
+          </svg>
+        </button>
       </header>
 
       <div class="search-section">
-        <div class="search-input-wrapper">
+        <div class="search-input-row">
+          <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+          </svg>
           <input
             type="text"
             id="searchInput"
-            placeholder="Search tabs by title or URL..."
+            placeholder="Search tabs..."
             autocomplete="off"
             autofocus
           />
           <button
             id="clearSearchBtn"
-            class="clear-search-btn"
             aria-label="Clear search"
             title="Clear search"
             style="display:none"
           >
-            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+            </svg>
             <span class="sr-only">Clear search</span>
           </button>
-          <button
-            id="exactMatchBtn"
-            class="exact-match-btn"
-            aria-pressed="false"
-            title="Toggle exact word match"
-            data-exact-match="false"
-          >
-            <i class="fa-solid fa-i-cursor" aria-hidden="true"></i>
-            <span class="sr-only">Exact Match</span>
-          </button>
         </div>
-        <div class="search-stats">
+        <button
+          id="exactMatchBtn"
+          aria-pressed="false"
+          title="Toggle exact word match"
+          data-exact-match="false"
+        >
+          Exact Match
+        </button>
+        <div class="search-stats" style="display:none">
           <span id="tabCount">0 tabs</span>
           <span id="matchCount"></span>
         </div>
@@ -60,7 +61,6 @@
         </div>
 
         <div id="noResults" class="no-results" style="display: none">
-          <div class="no-results-icon">🔍</div>
           <p>No tabs found matching your search</p>
         </div>
 
@@ -71,22 +71,18 @@
       </div>
 
       <footer>
-        <div class="actions">
-          <button
-            id="closeOthersBtn"
-            class="action-btn secondary"
-            title="Close all tabs except current"
-          >
-            Close Others
-          </button>
-          <button
-            id="refreshBtn"
-            class="action-btn primary"
-            title="Refresh tab list"
-          >
-            ↻ Refresh
-          </button>
-        </div>
+        <button
+          id="closeOthersBtn"
+          title="Close all tabs except current"
+        >
+          Close Other Tabs
+        </button>
+        <button
+          id="refreshBtn"
+          title="Refresh tab list"
+        >
+          Refresh
+        </button>
       </footer>
     </div>
 
