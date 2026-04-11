@@ -36,7 +36,7 @@ Do **not** repeat its content here — reference it when delegating to other age
 
 ## Workflow for each issue
 
-Follow `.github/copilot/instructions/issue-lifecycle.instructions.md` strictly.
+Follow `.github/agents/instructions/issue-lifecycle.instructions.md` strictly.
 
 ### Step-by-step
 
@@ -46,7 +46,7 @@ Follow `.github/copilot/instructions/issue-lifecycle.instructions.md` strictly.
 3. Create branch: feat/<issue-number>-<short-desc>
 4. Write to session memory: { issue, branch, status: 'design' }
 5. → Delegate to: @figma-inspector  (if issue has a Figma URL)
-6. Write design spec output to: .github/copilot/specs/design-<issue-number>.md
+6. Write design spec output to: .github/agents/specs/design-<issue-number>.md
 7. Write to session memory: { status: 'implementation' }
 8. → Delegate to: @ui-implementer  (pass path to design spec)
 9. Write to session memory: { status: 'validation' }
@@ -68,20 +68,20 @@ When delegating, always provide the specialist with:
 - The output path to write results to (if applicable)
 
 Example:
-> @figma-inspector — Issue #15. Read the Figma file at `<url>` and extract design tokens. Write the spec to `.github/copilot/specs/design-15.md`.
+> @massilpfigma-inspector — Issue #15. Read the Figma file at `<url>` and extract design tokens. Write the spec to `.github/agents/specs/design-15.md`.
 
 ---
 
 ## Available specialist agents
 
-| Agent | Responsibility |
-|---|---|
-| `@figma-inspector` | Read Figma, extract design tokens and component specs |
-| `@ui-implementer` | Implement HTML/CSS changes using Tailwind CSS |
-| `@test-validator` | Run lint, tests, coverage — report only, never fix |
-| `@release-manager` | CHANGELOG, PR creation, CI monitoring, docs update |
+| Agent | File | Responsibility |
+|---|---|---|
+| `@massilpfigma-inspector` | `massilpfigma-inspector.angent.md` | Read Figma, extract design tokens and component specs |
+| `@massilp-ui-implementer` | `massilp-ui-implementer.agent.md` | Implement HTML/CSS changes using Tailwind CSS |
+| `@massilp-test-validator` | `massilp-test-validator.angent.md` | Run lint, tests, coverage — report only, never fix |
+| `@massilp-release-manager` | `massilp-release-manager.agent.md` | CHANGELOG, PR creation, CI monitoring, docs update |
 
-If a task requires a specialist that does not exist, **create a new agent file** in `.github/copilot/` before delegating, following the same format.
+If a task requires a specialist that does not exist, **create a new agent file** in `.github/agents/` before delegating, following the same format.
 
 ---
 

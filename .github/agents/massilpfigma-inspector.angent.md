@@ -74,7 +74,7 @@ For each component visible in the Figma design, extract:
 
 ## Output
 
-Write the spec to: `.github/copilot/specs/design-<issue-number>.md`
+Write the spec to: `.github/agents/specs/design-<issue-number>.md`
 
 Format example:
 

@@ -14,7 +14,7 @@
       "file": ".github/copilot-instructions.md"
     },
     {
-      "file": ".github/copilot/instructions/issue-lifecycle.instructions.md"
+      "file": ".github/agents/instructions/issue-lifecycle.instructions.md"
     }
   ],
 
