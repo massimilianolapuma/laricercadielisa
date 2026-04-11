@@ -131,6 +131,39 @@ Ogni metodo pubblico aggiunto deve avere almeno:
 
 ---
 
+## 🔧 Workflow obbligatorio per ogni fix o feature richiesta
+
+Quando l'utente segnala un bug, un errore o richiede una fix (esempio: errore Chrome,
+test fallito, comportamento errato), **devi seguire sempre questo workflow completo**,
+senza eccezioni e senza saltare passi:
+
+1. **Apri una issue GitHub** con titolo e descrizione chiari del problema
+   - Titolo: breve e descrittivo (es. `build: _locales directory missing from output`)
+   - Descrizione: comportamento attuale, comportamento atteso, steps to reproduce
+2. **Crea un branch dedicato** dal nome `fix/<issue-number>-<short-description>`
+   (oppure `feat/<issue-number>-<short-description>` per feature)
+3. **Esegui la fix** usando agenti in parallelo dedicati — un agente per area di competenza
+   (es. uno per il codice, uno per i test, uno per il CSS)
+4. **Esegui la checklist pre-commit** (lint + test + coverage) prima di committare
+5. **Commit** con messaggio Conventional Commits (`fix(scope): ...`) e `Closes #N` nel footer
+6. **Push** del branch su `origin`
+7. **Apri una PR** che referenzia la issue con titolo e descrizione
+
+### Regola assoluta
+
+> **Non eseguire mai commit diretti su `main`.**
+> Non saltare nessuno step. Non aprire la PR prima che i check locali passino.
+
+### Esempio reale
+
+```
+Error: Default locale was specified, but _locales subtree is missing.
+```
+
+→ Issue #26 → branch `fix/26-build-include-locales` → fix `build.js` → commit → push → PR #27
+
+---
+
 ## ⚠️ Checklist pre-commit — Obbligatoria prima di ogni push
 
 Prima di ogni `git commit` (e ancor di più prima di ogni `git push` su una PR),
