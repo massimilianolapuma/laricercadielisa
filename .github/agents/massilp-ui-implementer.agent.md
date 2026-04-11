@@ -27,7 +27,7 @@ You do **not** run tests. You do **not** open PRs. You do **not** touch `popup.j
 ## Input
 
 You receive from the Coordinator:
-- Path to design spec: `.github/copilot/specs/design-<issue-number>.md`
+- Path to design spec: `.github/agents/specs/design-<issue-number>.md`
 - Branch name (already created by Coordinator)
 - Issue number
 
