@@ -69,7 +69,7 @@ const filesToCopy = [
 ];
 
 // Directories to copy
-const directoriesToCopy = ['icons'];
+const directoriesToCopy = ['icons', '_locales'];
 
 // Copy files
 filesToCopy.forEach(file => {
