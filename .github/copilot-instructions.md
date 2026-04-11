@@ -131,6 +131,40 @@ Ogni metodo pubblico aggiunto deve avere almeno:
 
 ---
 
+## ⚠️ Checklist pre-commit — Obbligatoria prima di ogni push
+
+Prima di ogni `git commit` (e ancor di più prima di ogni `git push` su una PR),
+eseguire **in locale** tutti i seguenti controlli nell'ordine indicato:
+
+```bash
+# 1. Lint — deve passare senza errori né warning
+npm run lint
+
+# 2. Test completi con coverage — tutti i test devono passare
+npm test -- --coverage --run
+
+# 3. Verifica coverage minima
+#    popup-init.js e il nuovo codice devono essere ≥ 80% su tutti i metric
+#    (stmts, branches, funcs, lines)
+```
+
+### Regola
+
+> **Non committare se uno qualsiasi di questi comandi fallisce.**
+> SonarCloud, CodeQL e gli altri CI gate rifletteranno esattamente ciò che
+> passa in locale. Un check fallito in locale fallirà anche in CI.
+
+### Cosa blocca la PR
+
+| Check | Comando locale | Gate CI |
+|---|---|---|
+| Lint errors / warnings | `npm run lint` | ESLint check in CI |
+| Test failure | `npm test -- --run` | Vitest in CI |
+| Coverage < 80% (nuovo codice) | `npm test -- --coverage --run` | SonarCloud quality gate |
+| Vulnerabilità statiche | — | CodeQL |
+
+---
+
 ## ⚠️ Conventional Commits — Critico per il release automatico
 
 Il workflow `rw-detect-semver-bump.yml` legge i commit dall'ultimo tag
