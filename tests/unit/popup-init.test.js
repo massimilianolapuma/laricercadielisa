@@ -38,6 +38,7 @@ describe('popup-init.js Coverage Tests', () => {
       },
       createElement: createElementSpy,
       querySelectorAll: vi.fn(() => []),
+      getElementById: vi.fn(() => null),
       title: ''
     };
 
@@ -242,5 +243,148 @@ describe('popup-init.js Coverage Tests', () => {
 
     // Should not add event listener
     expect(addEventListenerSpy).not.toHaveBeenCalled();
+  });
+});
+
+describe('initLangBtn', () => {
+  let origDocument;
+  let origWindow;
+  let mockLangBtn;
+  let mockDoc;
+  let mockWin;
+  let TabSearcherMock2;
+
+  beforeEach(() => {
+    origDocument = global.document;
+    origWindow = global.window;
+
+    vi.clearAllMocks();
+    vi.resetModules();
+
+    mockLangBtn = { textContent: '', addEventListener: vi.fn() };
+
+    mockDoc = {
+      readyState: 'complete',
+      addEventListener: vi.fn(),
+      head: { appendChild: vi.fn() },
+      createElement: vi.fn(() => ({ textContent: '' })),
+      querySelectorAll: vi.fn(() => []),
+      getElementById: vi.fn(() => mockLangBtn),
+      title: ''
+    };
+    mockWin = {};
+
+    class _TS { constructor() { this.init = vi.fn(); } }
+    TabSearcherMock2 = _TS;
+
+    global.document = mockDoc;
+    global.window = mockWin;
+    global.fetch = vi.fn(() =>
+      Promise.resolve({ json: () => Promise.resolve({}) })
+    );
+    global.chrome = {
+      tabs: { query: vi.fn(), update: vi.fn(), remove: vi.fn(), get: vi.fn(), getCurrent: vi.fn() },
+      windows: { update: vi.fn() },
+      runtime: {
+        lastError: null,
+        onMessage: { addListener: vi.fn(), removeListener: vi.fn() },
+        getURL: vi.fn(p => `chrome-extension://abc123/${p}`)
+      },
+      storage: {
+        session: { set: vi.fn().mockResolvedValue(undefined), get: vi.fn().mockResolvedValue({}) },
+        local: {
+          get: vi.fn().mockResolvedValue({}),
+          set: vi.fn().mockResolvedValue(undefined)
+        }
+      },
+      i18n: {
+        getMessage: vi.fn(() => ''),
+        getUILanguage: vi.fn(() => 'en-US')
+      }
+    };
+    vi.doMock('../../popup.js', () => ({ TabSearcher: TabSearcherMock2 }));
+  });
+
+  afterEach(() => {
+    global.document = origDocument;
+    global.window = origWindow;
+    vi.doUnmock('../../popup.js');
+  });
+
+  it('returns early when langBtn not found', async () => {
+    mockDoc.getElementById = vi.fn(() => null);
+    await import('../../popup-init.js');
+    await Promise.resolve();
+    expect(mockDoc.getElementById).toHaveBeenCalledWith('langBtn');
+    expect(global.chrome.storage.local.get).not.toHaveBeenCalled();
+  });
+
+  it('sets langBtn text to EN when no stored locale and UI lang is en', async () => {
+    global.chrome.storage.local.get = vi.fn().mockResolvedValue({});
+    global.chrome.i18n.getUILanguage = vi.fn(() => 'en-US');
+    await import('../../popup-init.js');
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(mockLangBtn.textContent).toBe('EN');
+  });
+
+  it('falls back to EN when UI locale is unknown', async () => {
+    global.chrome.storage.local.get = vi.fn().mockResolvedValue({});
+    global.chrome.i18n.getUILanguage = vi.fn(() => 'fr-FR');
+    await import('../../popup-init.js');
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(mockLangBtn.textContent).toBe('EN');
+  });
+
+  it('sets langBtn text to IT when UI locale is it', async () => {
+    global.chrome.storage.local.get = vi.fn().mockResolvedValue({});
+    global.chrome.i18n.getUILanguage = vi.fn(() => 'it-IT');
+    await import('../../popup-init.js');
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(mockLangBtn.textContent).toBe('IT');
+  });
+
+  it('applies stored locale on init via applyLang', async () => {
+    global.chrome.storage.local.get = vi.fn().mockResolvedValue({ forcedLocale: 'it' });
+    await import('../../popup-init.js');
+    await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(global.fetch).toHaveBeenCalled();
+    expect(global.chrome.runtime.getURL).toHaveBeenCalledWith('_locales/it/messages.json');
+    expect(mockLangBtn.textContent).toBe('IT');
+  });
+
+  it('registers click handler on langBtn', async () => {
+    global.chrome.storage.local.get = vi.fn().mockResolvedValue({});
+    global.chrome.i18n.getUILanguage = vi.fn(() => 'en-US');
+    await import('../../popup-init.js');
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(mockLangBtn.addEventListener).toHaveBeenCalledWith('click', expect.any(Function));
+  });
+
+  it('click cycles en -> it and persists to storage', async () => {
+    global.chrome.storage.local.get = vi.fn().mockResolvedValue({});
+    global.chrome.i18n.getUILanguage = vi.fn(() => 'en-US');
+    await import('../../popup-init.js');
+    await Promise.resolve();
+    await Promise.resolve();
+
+    const clickCall = mockLangBtn.addEventListener.mock.calls.find(([e]) => e === 'click');
+    const clickHandler = clickCall[1];
+    clickHandler();
+    await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(global.chrome.runtime.getURL).toHaveBeenCalledWith('_locales/it/messages.json');
+    expect(global.chrome.storage.local.set).toHaveBeenCalledWith({ forcedLocale: 'it' });
+    expect(mockLangBtn.textContent).toBe('IT');
   });
 });

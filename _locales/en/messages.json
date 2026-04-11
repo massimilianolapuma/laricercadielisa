@@ -20,5 +20,6 @@
   "tab_singular":           { "message": "tab" },
   "tab_plural":             { "message": "tabs" },
   "match_singular":         { "message": "match" },
-  "match_plural":           { "message": "matches" }
+  "match_plural":           { "message": "matches" },
+  "toggleLanguage":         { "message": "Switch language", "description": "Tooltip for language switch button" }
 }
