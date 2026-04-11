@@ -1,5 +1,4 @@
 ---
-agent: agent
 description: >
   Team Coordinator for laricercadielisa. Receives a task or issue number,
   orchestrates the correct specialist agents in sequence, manages the issue
