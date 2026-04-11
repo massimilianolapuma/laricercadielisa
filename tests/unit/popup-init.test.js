@@ -104,10 +104,10 @@ describe('popup-init.js Coverage Tests', () => {
     const ariaEl = { setAttribute: vi.fn(), dataset: { i18nAriaLabel: 'closeTab' } };
 
     mockDocument.querySelectorAll = vi.fn(selector => {
-      if (selector === '[data-i18n]') return [i18nEl];
-      if (selector === '[data-i18n-placeholder]') return [placeholderEl];
-      if (selector === '[data-i18n-title]') return [titleAttrEl];
-      if (selector === '[data-i18n-aria-label]') return [ariaEl];
+      if (selector === '[data-i18n]') { return [i18nEl]; }
+      if (selector === '[data-i18n-placeholder]') { return [placeholderEl]; }
+      if (selector === '[data-i18n-title]') { return [titleAttrEl]; }
+      if (selector === '[data-i18n-aria-label]') { return [ariaEl]; }
       return [];
     });
     mockDocument.readyState = 'complete';
@@ -145,7 +145,7 @@ describe('popup-init.js Coverage Tests', () => {
     const unknownEl = { textContent: '', dataset: { i18n: 'unknownKey' } };
 
     mockDocument.querySelectorAll = vi.fn(selector => {
-      if (selector === '[data-i18n]') return [unknownEl];
+      if (selector === '[data-i18n]') { return [unknownEl]; }
       return [];
     });
     mockDocument.readyState = 'complete';
