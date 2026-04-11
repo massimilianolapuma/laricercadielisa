@@ -110,7 +110,13 @@ describe('TabSearcher Coverage Tests', () => {
 
     // Mock window.close
     global.window = {
-      close: vi.fn()
+      close: vi.fn(),
+      matchMedia: vi.fn().mockImplementation(query => ({
+        matches: false,
+        media: query,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn()
+      }))
     };
 
     // Mock console methods
@@ -693,7 +699,10 @@ describe('TabSearcher Coverage Tests', () => {
       const mockElement = createMockElement();
       vi.spyOn(document, 'getElementById').mockReturnValue(mockElement);
       mockChrome.tabs.query.mockResolvedValue([]);
-      mockChrome.storage.session.get.mockResolvedValueOnce({ searchQuery: 'restored' });
+      // initTheme() consumes the first get call, restoreSearchQuery() gets the second
+      mockChrome.storage.session.get
+        .mockResolvedValueOnce({}) // initTheme → themeMode
+        .mockResolvedValueOnce({ searchQuery: 'restored' }); // restoreSearchQuery
 
       const searcher = new TabSearcher();
       await searcher.init();
@@ -750,6 +759,142 @@ describe('TabSearcher Coverage Tests', () => {
 
       expect(tabSearcher.searchInput.value).toBe('');
       expect(tabSearcher.clearSearchBtn.style.display).toBe('none');
+    });
+  });
+
+  describe('Theme toggle methods', () => {
+    let tabSearcher;
+
+    beforeEach(() => {
+      // jsdom does not implement matchMedia — provide a stub
+      Object.defineProperty(window, 'matchMedia', {
+        writable: true,
+        value: vi.fn().mockImplementation(query => ({
+          matches: false,
+          media: query,
+          addEventListener: vi.fn(),
+          removeEventListener: vi.fn()
+        }))
+      });
+
+      tabSearcher = new TabSearcher();
+      // Mock container with classList
+      const container = document.createElement('div');
+      container.className = 'container';
+      document.body.appendChild(container);
+      // Mock themeBtn
+      const btn = document.createElement('button');
+      btn.id = 'themeBtn';
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      btn.appendChild(svg);
+      document.body.appendChild(btn);
+      tabSearcher.themeBtn = btn;
+    });
+
+    afterEach(() => {
+      document.body.innerHTML = '';
+    });
+
+    describe('getThemeIcon', () => {
+      it('returns sun SVG paths for light mode', () => {
+        const icon = tabSearcher.getThemeIcon('light');
+        expect(icon).toContain('circle cx="12"');
+      });
+
+      it('returns moon SVG path for dark mode', () => {
+        const icon = tabSearcher.getThemeIcon('dark');
+        expect(icon).toContain('M12 3a6');
+      });
+
+      it('returns monitor SVG paths for system mode', () => {
+        const icon = tabSearcher.getThemeIcon('system');
+        expect(icon).toContain('rect width="20"');
+      });
+    });
+
+    describe('applyTheme', () => {
+      it('adds dark class to container when mode is dark', async () => {
+        global.chrome.storage.session.set.mockResolvedValue(undefined);
+        await tabSearcher.applyTheme('dark');
+        const container = document.querySelector('.container');
+        expect(container.classList.contains('dark')).toBe(true);
+      });
+
+      it('removes dark class for light mode', async () => {
+        global.chrome.storage.session.set.mockResolvedValue(undefined);
+        const container = document.querySelector('.container');
+        container.classList.add('dark');
+        await tabSearcher.applyTheme('light');
+        expect(container.classList.contains('dark')).toBe(false);
+      });
+
+      it('uses prefers-color-scheme for system mode', async () => {
+        global.chrome.storage.session.set.mockResolvedValue(undefined);
+        // jsdom default: prefers-color-scheme: light (so system → light)
+        await tabSearcher.applyTheme('system');
+        const container = document.querySelector('.container');
+        expect(container.classList.contains('dark')).toBe(false);
+      });
+
+      it('updates themeBtn aria-label attribute', async () => {
+        global.chrome.storage.session.set.mockResolvedValue(undefined);
+        await tabSearcher.applyTheme('dark');
+        expect(tabSearcher.themeBtn.getAttribute('aria-label')).toBe('Theme: dark');
+      });
+
+      it('handles storage error gracefully', async () => {
+        global.chrome.storage.session.set.mockRejectedValueOnce(new Error('storage fail'));
+        // Should not throw
+        await expect(tabSearcher.applyTheme('light')).resolves.toBeUndefined();
+      });
+    });
+
+    describe('initTheme', () => {
+      it('reads themeMode from storage and applies it', async () => {
+        global.chrome.storage.session.get.mockResolvedValueOnce({ themeMode: 'dark' });
+        global.chrome.storage.session.set.mockResolvedValue(undefined);
+        await tabSearcher.initTheme();
+        const container = document.querySelector('.container');
+        expect(container.classList.contains('dark')).toBe(true);
+      });
+
+      it('defaults to system when no stored preference', async () => {
+        global.chrome.storage.session.get.mockResolvedValueOnce({});
+        global.chrome.storage.session.set.mockResolvedValue(undefined);
+        await tabSearcher.initTheme();
+        // system mode with jsdom → not dark
+        const container = document.querySelector('.container');
+        expect(container.classList.contains('dark')).toBe(false);
+      });
+
+      it('falls back to system on storage error', async () => {
+        global.chrome.storage.session.get.mockRejectedValueOnce(new Error('fail'));
+        global.chrome.storage.session.set.mockResolvedValue(undefined);
+        await expect(tabSearcher.initTheme()).resolves.toBeUndefined();
+      });
+    });
+
+    describe('cycleTheme', () => {
+      it('cycles system → light → dark → system', async () => {
+        global.chrome.storage.session.set.mockResolvedValue(undefined);
+
+        global.chrome.storage.session.get.mockResolvedValueOnce({ themeMode: 'system' });
+        await tabSearcher.cycleTheme();
+        expect(global.chrome.storage.session.set).toHaveBeenCalledWith(expect.objectContaining({ themeMode: 'light' }));
+
+        global.chrome.storage.session.get.mockResolvedValueOnce({ themeMode: 'light' });
+        await tabSearcher.cycleTheme();
+        expect(global.chrome.storage.session.set).toHaveBeenCalledWith(expect.objectContaining({ themeMode: 'dark' }));
+
+        global.chrome.storage.session.get.mockResolvedValueOnce({ themeMode: 'dark' });
+        await tabSearcher.cycleTheme();
+        expect(global.chrome.storage.session.set).toHaveBeenCalledWith(expect.objectContaining({ themeMode: 'system' }));
+      });
+
+      it('handles storage error gracefully', async () => {
+        global.chrome.storage.session.get.mockRejectedValueOnce(new Error('fail'));
+        await expect(tabSearcher.cycleTheme()).resolves.toBeUndefined();
+      });
     });
   });
 });
