@@ -155,3 +155,85 @@ jobs:
                   git tag -a "${TAG}" -m "release: ${TAG}"
                   git push "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git" "${TAG}"
                   echo "Tag ${TAG} creato e pushato — triggera rel-release.yml"
+
+    # --------------------------------------------------------------------------
+    # Job 4: pacchettizza l'estensione e crea la GitHub Release con il .zip.
+    # Gira nello stesso workflow (nessun token aggiuntivo richiesto).
+    # La versione in manifest.json viene impostata dal tag prima di zippare,
+    # così il pannello "Estensioni" di Chrome mostra la versione corretta.
+    create-release:
+        name: Package & publish release v${{ needs.detect.outputs.release-as }}
+        needs: [detect, create-tag]
+        if: needs.create-tag.result == 'success'
+        runs-on: ubuntu-latest
+        timeout-minutes: 10
+        permissions:
+            contents: write
+
+        steps:
+            - name: Checkout tag
+              uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+              with:
+                  ref: v${{ needs.detect.outputs.release-as }}
+                  fetch-depth: 0
+
+            # ------------------------------------------------------------------
+            # Imposta la versione di manifest.json dal tag — è questo valore
+            # che Chrome mostra nel pannello Estensioni.
+            # [template-injection] la versione viene passata come env var,
+            # mai interpolata inline in script shell.
+            - name: Set manifest.json version from tag
+              env:
+                  VERSION: ${{ needs.detect.outputs.release-as }}
+              run: |
+                  node -e "
+                    const fs = require('fs');
+                    const m = JSON.parse(fs.readFileSync('manifest.json', 'utf8'));
+                    m.version = process.env.VERSION;
+                    fs.writeFileSync('manifest.json', JSON.stringify(m, null, 2) + '\n');
+                  "
+                  echo "manifest.json version → ${VERSION}"
+
+            # ------------------------------------------------------------------
+            # Copia i file dell'estensione in una directory temporanea e crea
+            # il pacchetto .zip da allegare alla GitHub Release.
+            - name: Create extension package
+              env:
+                  VERSION: ${{ needs.detect.outputs.release-as }}
+              run: |
+                  mkdir -p _pkg
+                  cp manifest.json popup.html popup.js popup.css popup-init.js README.md LICENSE _pkg/
+                  cp -r icons _pkg/
+                  cd _pkg
+                  zip -r "../laricercadielisa-${VERSION}.zip" .
+                  cd ..
+                  echo "ZIP_NAME=laricercadielisa-${VERSION}.zip" >> "$GITHUB_ENV"
+                  echo "Pacchetto creato: laricercadielisa-${VERSION}.zip"
+
+            # ------------------------------------------------------------------
+            # Estrae la sezione del CHANGELOG per la versione corrente.
+            - name: Extract CHANGELOG section
+              id: changelog
+              run: |
+                  VERSION="${{ needs.detect.outputs.release-as }}"
+                  BODY=$(awk "/^## \[${VERSION}\]/{found=1; next} found && /^## \[/{exit} found{print}" CHANGELOG.md 2>/dev/null || true)
+                  if [ -z "$BODY" ]; then
+                    BODY="See [CHANGELOG.md](CHANGELOG.md) for details."
+                  fi
+                  echo "$BODY" > /tmp/release_body.md
+                  echo "body_path=/tmp/release_body.md" >> "$GITHUB_OUTPUT"
+
+            # ------------------------------------------------------------------
+            # Crea la GitHub Release e allega il pacchetto .zip.
+            - name: Create GitHub Release
+              uses: softprops/action-gh-release@153bb8e04406b158c6c84fc1615b65b24149a1fe # v2
+              with:
+                  tag_name: v${{ needs.detect.outputs.release-as }}
+                  name: Release v${{ needs.detect.outputs.release-as }}
+                  body_path: ${{ steps.changelog.outputs.body_path }}
+                  generate_release_notes: true
+                  draft: false
+                  prerelease: ${{ contains(needs.detect.outputs.release-as, '-rc.') }}
+                  files: ${{ env.ZIP_NAME }}
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
